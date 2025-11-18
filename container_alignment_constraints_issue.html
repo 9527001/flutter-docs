@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Container alignment 和 constraints 冲突示例</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header .back-btn {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .keyword {
+            color: #66d9ef;
+        }
+
+        .string {
+            color: #e6db74;
+        }
+
+        .number {
+            color: #ae81ff;
+        }
+
+        .comment {
+            color: #75715e;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .error-box {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .flow-diagram {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: flex-start;
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .step-number {
+            width: 35px;
+            height: 35px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .step-description {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .visual-demo {
+            display: flex;
+            gap: 30px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .demo-case {
+            flex: 1;
+            min-width: 300px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .demo-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .visual-box {
+            border: 2px solid #333;
+            padding: 10px;
+            margin: 10px 0;
+            background: white;
+            position: relative;
+        }
+
+        .visual-box.parent {
+            border-color: #e74c3c;
+            background: rgba(231, 76, 60, 0.05);
+        }
+
+        .visual-box.child {
+            border-color: #3498db;
+            background: rgba(52, 152, 219, 0.05);
+        }
+
+        .box-label {
+            position: absolute;
+            top: -12px;
+            left: 10px;
+            background: white;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .box-size {
+            font-size: 11px;
+            color: #999;
+            font-family: 'Courier New', monospace;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-btn">← 返回</a>
+            <h1>⚠️ Container: alignment 和 constraints 冲突问题</h1>
+            <p>深入理解为什么 constraints 会失效</p>
+        </div>
+
+        <div class="content">
+            <!-- 问题描述 -->
+            <div class="section">
+                <div class="section-title">❌ 问题：constraints 失效</div>
+                
+                <div class="error-box">
+                    <strong>常见困惑：</strong><br>
+                    当在 Container 中同时设置 <code>alignment</code> 和 <code>constraints</code> 时，
+                    开发者经常发现 constraints 似乎"失效"了，Container 并没有按照预期的约束来限制尺寸。
+                </div>
+
+                <div class="code-block">
+<span class="comment">// ❌ 期望：Container 应该被限制在 100×100 以内</span>
+<span class="comment">// 实际：Container 会填满整个父Widget！</span>
+<span class="keyword">Container</span>(
+  width: <span class="number">300</span>,
+  height: <span class="number">300</span>,
+  color: Colors.grey[<span class="number">200</span>],
+  child: <span class="keyword">Container</span>(
+    alignment: Alignment.center,          <span class="comment">// ⚠️ 设置了 alignment</span>
+    constraints: BoxConstraints(
+      maxWidth: <span class="number">100</span>,                  <span class="comment">// ⚠️ 设置了 constraints</span>
+      maxHeight: <span class="number">100</span>,
+    ),
+    color: Colors.blue,
+    child: <span class="keyword">Text</span>(<span class="string">'Hello'</span>),
+  ),
+)
+
+<span class="comment">// 结果：蓝色 Container 是 300×300，而不是 100×100！</span>
+                </div>
+            </div>
+
+            <!-- 原因分析 -->
+            <div class="section">
+                <div class="section-title">🔍 原因分析：Container 的内部实现</div>
+                
+                <div class="info-box">
+                    <strong>核心问题：</strong><br>
+                    Container 不是一个简单的 Widget，它内部会根据参数组合不同的子 Widget。
+                    当同时设置 alignment 和 constraints 时，会创建一个 <code>Align</code> Widget，
+                    而 <code>Align</code> 会让 Container 填满父Widget的约束！
+                </div>
+
+                <div class="flow-diagram">
+                    <h4 style="margin-bottom: 15px;">Container 内部 Widget 树构建过程：</h4>
+                    
+                    <div class="flow-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">检查 alignment 参数</div>
+                            <div class="step-description">
+                                if (alignment != null) → 创建 Align Widget<br>
+                                <strong>关键：</strong>Align 会让 Container 填满父约束！
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">检查 constraints 参数</div>
+                            <div class="step-description">
+                                if (constraints != null) → 创建 ConstrainedBox Widget<br>
+                                <strong>问题：</strong>ConstrainedBox 在 Align 的<strong>内部</strong>，而不是外部！
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">最终 Widget 树结构</div>
+                            <div class="step-description">
+                                <pre style="margin-top: 10px; background: #f8f9fa; padding: 10px; border-radius: 4px;">
+Container (尺寸: 填满父约束 300×300)
+└── Align (让Container填满父约束)
+    └── ConstrainedBox (约束 maxWidth: 100, maxHeight: 100)
+        └── child (Text)
+                                </pre>
+                                <strong>结果：</strong>Container 本身是 300×300，constraints 只影响了内部的 child！
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 详细流程 -->
+            <div class="section">
+                <div class="section-title">📊 详细布局流程</div>
+
+                <div class="flow-diagram">
+                    <h4 style="margin-bottom: 15px;">布局约束传递过程：</h4>
+
+                    <div class="flow-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">父Widget传递约束给Container</div>
+                            <div class="step-description">
+                                约束：0 ≤ width ≤ 300, 0 ≤ height ≤ 300
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Container 创建 Align Widget</div>
+                            <div class="step-description">
+                                因为设置了 <code>alignment</code> 参数<br>
+                                <strong>Align 的特性：</strong>它会让自己填满父约束（300×300）
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Align 传递 Loose Constraints</div>
+                            <div class="step-description">
+                                Align → ConstrainedBox<br>
+                                约束：0 ≤ width ≤ 300, 0 ≤ height ≤ 300 (Loose)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title">ConstrainedBox 修改约束</div>
+                            <div class="step-description">
+                                ConstrainedBox 将约束修改为：<br>
+                                0 ≤ width ≤ <strong>100</strong>, 0 ≤ height ≤ <strong>100</strong><br>
+                                （取原约束和自身约束的最小值）
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <div class="step-title">child (Text) 确定尺寸</div>
+                            <div class="step-description">
+                                Text 在 100×100 约束内确定自己的尺寸，假设为 50×20
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="step-number">6</div>
+                        <div class="step-content">
+                            <div class="step-title">尺寸向上返回</div>
+                            <div class="step-description">
+                                Text (50×20) → ConstrainedBox (50×20) → Align (300×300) → Container (300×300)<br>
+                                <strong>关键：</strong>Align 返回的尺寸是 300×300，而不是 50×20！
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="step-number">7</div>
+                        <div class="step-content">
+                            <div class="step-title">最终结果</div>
+                            <div class="step-description">
+                                Container 尺寸：<strong>300×300</strong> ❌（而不是期望的 100×100）<br>
+                                内部 child 尺寸：50×20 ✅（受到 constraints 限制）
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 可视化对比 -->
+            <div class="section">
+                <div class="section-title">👁️ 可视化对比</div>
+
+                <div class="visual-demo">
+                    <div class="demo-case">
+                        <div class="demo-title">❌ 错误理解（期望）</div>
+                        <div class="visual-box parent" style="width: 300px; height: 200px;">
+                            <span class="box-label">Parent (300×300)</span>
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                                <div class="visual-box child" style="width: 100px; height: 100px;">
+                                    <span class="box-label">Container (100×100)</span>
+                                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 12px;">
+                                        child
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="box-size">期望：Container 被 constraints 限制为 100×100</div>
+                        </div>
+                    </div>
+
+                    <div class="demo-case">
+                        <div class="demo-title">✅ 实际情况</div>
+                        <div class="visual-box parent" style="width: 300px; height: 200px; position: relative;">
+                            <span class="box-label">Parent (300×300)</span>
+                            <div style="position: absolute; inset: 0; background: rgba(52, 152, 219, 0.2); border: 2px solid #3498db;">
+                                <span style="position: absolute; top: -12px; left: 10px; background: white; padding: 2px 8px; font-size: 12px; font-weight: bold;">Container (300×300)</span>
+                                <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                                    <div style="border: 2px dashed #666; padding: 10px; font-size: 12px;">
+                                        child (受 constraints 限制)
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="box-size" style="position: absolute; bottom: 5px; left: 5px;">实际：Container 填满 300×300，constraints 只限制 child</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Container 源码分析 -->
+            <div class="section">
+                <div class="section-title">💻 Container 源码分析（简化）</div>
+
+                <div class="code-block">
+<span class="comment">// Container 的 build 方法（简化版本）</span>
+<span class="keyword">Widget</span> build(BuildContext context) {
+  Widget? current = child;
+
+  <span class="comment">// 1. 如果有 alignment，包裹 Align</span>
+  <span class="keyword">if</span> (alignment != <span class="keyword">null</span>) {
+    current = <span class="keyword">Align</span>(
+      alignment: alignment!,
+      child: current,
+    );
+  }
+
+  <span class="comment">// 2. 如果有 constraints，包裹 ConstrainedBox</span>
+  <span class="comment">// ⚠️ 注意：这是在 Align 的内部！</span>
+  <span class="keyword">if</span> (constraints != <span class="keyword">null</span>) {
+    current = <span class="keyword">ConstrainedBox</span>(
+      constraints: constraints!,
+      child: current,
+    );
+  }
+
+  <span class="comment">// 3. 如果有 padding，包裹 Padding</span>
+  <span class="keyword">if</span> (padding != <span class="keyword">null</span>) {
+    current = <span class="keyword">Padding</span>(
+      padding: padding!,
+      child: current,
+    );
+  }
+
+  <span class="comment">// 4. 如果有 decoration，包裹 DecoratedBox</span>
+  <span class="keyword">if</span> (decoration != <span class="keyword">null</span>) {
+    current = <span class="keyword">DecoratedBox</span>(
+      decoration: decoration!,
+      child: current,
+    );
+  }
+
+  <span class="keyword">return</span> current ?? <span class="keyword">SizedBox</span>.shrink();
+}
+
+<span class="comment">// 关键问题：Widget 树结构</span>
+<span class="comment">// Align (填满父约束)</span>
+<span class="comment">//   └── ConstrainedBox (约束在 Align 内部)</span>
+<span class="comment">//       └── Padding</span>
+<span class="comment">//           └── DecoratedBox</span>
+<span class="comment">//               └── child</span>
+                </div>
+
+                <div class="warning-box">
+                    <strong>⚠️ 关键点：</strong><br>
+                    Container 的 Widget 树构建顺序导致：
+                    <ul style="margin-top: 10px;">
+                        <li><code>alignment</code> 参数先被处理，创建 Align</li>
+                        <li><code>constraints</code> 参数后被处理，但在 Align 的<strong>内部</strong></li>
+                        <li>Align 会让 Container 填满父约束</li>
+                        <li>ConstrainedBox 只能约束它内部的 child，无法约束 Container 本身</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 解决方案 -->
+            <div class="section">
+                <div class="section-title">✅ 解决方案</div>
+
+                <h4 style="margin: 20px 0 10px 0;">方案1：使用 SizedBox 或 ConstrainedBox 包裹 Container</h4>
+                <div class="code-block">
+<span class="comment">// ✅ 正确：在 Container 外部使用 ConstrainedBox</span>
+<span class="keyword">ConstrainedBox</span>(
+  constraints: BoxConstraints(
+    maxWidth: <span class="number">100</span>,
+    maxHeight: <span class="number">100</span>,
+  ),
+  child: <span class="keyword">Container</span>(
+    alignment: Alignment.center,
+    color: Colors.blue,
+    child: <span class="keyword">Text</span>(<span class="string">'Hello'</span>),
+  ),
+)
+
+<span class="comment">// 或者使用 SizedBox</span>
+<span class="keyword">SizedBox</span>(
+  width: <span class="number">100</span>,
+  height: <span class="number">100</span>,
+  child: <span class="keyword">Container</span>(
+    alignment: Alignment.center,
+    color: Colors.blue,
+    child: <span class="keyword">Text</span>(<span class="string">'Hello'</span>),
+  ),
+)
+                </div>
+
+                <h4 style="margin: 20px 0 10px 0;">方案2：不使用 alignment，改用 Center 或 Align</h4>
+                <div class="code-block">
+<span class="comment">// ✅ 正确：不在 Container 中设置 alignment</span>
+<span class="keyword">Container</span>(
+  constraints: BoxConstraints(
+    maxWidth: <span class="number">100</span>,
+    maxHeight: <span class="number">100</span>,
+  ),
+  color: Colors.blue,
+  child: <span class="keyword">Center</span>(  <span class="comment">// 使用 Center 包裹 child</span>
+    child: <span class="keyword">Text</span>(<span class="string">'Hello'</span>),
+  ),
+)
+                </div>
+
+                <h4 style="margin: 20px 0 10px 0;">方案3：移除 constraints，使用 width 和 height</h4>
+                <div class="code-block">
+<span class="comment">// ✅ 如果只需要固定尺寸，直接使用 width/height</span>
+<span class="keyword">Container</span>(
+  width: <span class="number">100</span>,
+  height: <span class="number">100</span>,
+  alignment: Alignment.center,
+  color: Colors.blue,
+  child: <span class="keyword">Text</span>(<span class="string">'Hello'</span>),
+)
+                </div>
+            </div>
+
+            <!-- 对比表格 -->
+            <div class="section">
+                <div class="section-title">📋 不同方案对比</div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>方案</th>
+                            <th>Container 尺寸</th>
+                            <th>child 位置</th>
+                            <th>是否符合预期</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>❌ alignment + constraints</td>
+                            <td>填满父约束（300×300）</td>
+                            <td>居中</td>
+                            <td>否，Container 太大</td>
+                        </tr>
+                        <tr>
+                            <td>✅ ConstrainedBox 包裹</td>
+                            <td>受限于 100×100</td>
+                            <td>居中</td>
+                            <td>是</td>
+                        </tr>
+                        <tr>
+                            <td>✅ SizedBox 包裹</td>
+                            <td>固定 100×100</td>
+                            <td>居中</td>
+                            <td>是</td>
+                        </tr>
+                        <tr>
+                            <td>✅ Center + constraints</td>
+                            <td>受限于 100×100</td>
+                            <td>居中（通过 Center）</td>
+                            <td>是</td>
+                        </tr>
+                        <tr>
+                            <td>✅ width/height</td>
+                            <td>固定 100×100</td>
+                            <td>居中</td>
+                            <td>是</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 总结 -->
+            <div class="section">
+                <div class="section-title">📝 总结</div>
+
+                <div class="success-box">
+                    <h4>核心原因：</h4>
+                    <ol style="margin-top: 10px; padding-left: 20px;">
+                        <li><strong>Widget 树构建顺序</strong>：Container 先创建 Align（因为 alignment），后创建 ConstrainedBox（因为 constraints）</li>
+                        <li><strong>Align 的特性</strong>：Align Widget 会让自己填满父Widget的约束</li>
+                        <li><strong>约束传递方向</strong>：ConstrainedBox 在 Align 内部，只能约束它的子Widget，无法约束 Container 本身</li>
+                        <li><strong>最终结果</strong>：Container 的尺寸由 Align 决定（填满父约束），constraints 只约束了内部 child</li>
+                    </ol>
+                </div>
+
+                <div class="info-box">
+                    <h4>最佳实践：</h4>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <li>✅ 如果需要同时限制尺寸和居中，在 Container 外部使用 ConstrainedBox 或 SizedBox</li>
+                        <li>✅ 或者不在 Container 中使用 alignment，改用 Center/Align 包裹 child</li>
+                        <li>✅ 理解 Container 的内部实现，避免参数冲突</li>
+                        <li>❌ 避免在同一个 Container 中同时使用 alignment 和 constraints</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">
+                    <h4>记住：</h4>
+                    <p><strong>Container 不是魔法盒子！</strong></p>
+                    <p style="margin-top: 10px;">
+                        它只是一个便利的组合 Widget，内部会根据参数组合不同的子 Widget。
+                        理解这些子 Widget 的组合顺序和特性，就能避免类似的"失效"问题。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

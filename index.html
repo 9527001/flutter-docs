@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind App - 开发文档与工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .card-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .card-button {
+            display: inline-block;
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .card-button:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+
+        .docs-section {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .docs-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .docs-list {
+            list-style: none;
+        }
+
+        .docs-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .docs-list li:last-child {
+            border-bottom: none;
+        }
+
+        .docs-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .docs-link:hover {
+            color: #764ba2;
+            transform: translateX(5px);
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>📚 Mind App</h1>
+            <p>开发文档与工具集合</p>
+        </div>
+
+        <!-- 卡片网格 -->
+        <div class="card-grid">
+            <!-- Flutter 三棵树可视化 -->
+            <div class="card" onclick="window.location.href='flutter_tree_visualization.html'">
+                <div class="card-icon">🌳</div>
+                <div class="card-title">Flutter Engine 三棵树可视化</div>
+                <div class="card-description">
+                    交互式学习工具，深入理解 Widget Tree、Element Tree 和 RenderObject Tree 的工作原理和相互关系。
+                </div>
+                <a href="flutter_tree_visualization.html" class="card-button">立即体验 →</a>
+            </div>
+
+            <!-- Flutter Layout 可视化 -->
+            <div class="card" onclick="window.location.href='flutter_layout_visualization.html'">
+                <div class="card-icon">📐</div>
+                <div class="card-title">Flutter Layout 布局机制</div>
+                <div class="card-description">
+                    深入理解约束传递、尺寸确定和布局流程，掌握 Constraints go down, Sizes go up 原则。
+                </div>
+                <a href="flutter_layout_visualization.html" class="card-button">立即体验 →</a>
+            </div>
+
+            <!-- 占位卡片 -->
+            <div class="card" style="opacity: 0.6; cursor: not-allowed;">
+                <div class="card-icon">📖</div>
+                <div class="card-title">API 文档</div>
+                <div class="card-description">
+                    完整的 API 文档和使用指南...
+                </div>
+                <div class="card-button" style="opacity: 0.5;">敬请期待</div>
+            </div>
+        </div>
+
+        <!-- 文档列表 -->
+        <div class="docs-section">
+            <div class="docs-title">📄 文档列表</div>
+            <ul class="docs-list">
+                <li>
+                    <a href="QUICKSTART.md" class="docs-link">
+                        <span>📘</span>
+                        <span>快速开始指南 - Flutter 三棵树可视化</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="README_FLUTTER_TREE.md" class="docs-link">
+                        <span>📗</span>
+                        <span>详细文档 - Flutter Engine 三棵树</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="flutter_tree_visualization.html" class="docs-link">
+                        <span>🌐</span>
+                        <span>在线工具 - 三棵树可视化</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="flutter_layout_visualization.html" class="docs-link">
+                        <span>📐</span>
+                        <span>在线工具 - Layout 布局机制</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="README_LAYOUT.md" class="docs-link">
+                        <span>📙</span>
+                        <span>详细文档 - Flutter Layout 设计思路</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="container_alignment_constraints_issue.html" class="docs-link">
+                        <span>⚠️</span>
+                        <span>案例分析 - Container alignment 和 constraints 冲突</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="align_constraints_source_code_analysis.html" class="docs-link">
+                        <span>💻</span>
+                        <span>源码分析 - Align 和 ConstrainedBox 设计原理</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="GITHUB_PAGES_DEPLOY.md" class="docs-link">
+                        <span>🚀</span>
+                        <span>部署指南 - 部署到 GitHub Pages</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="footer">
+            <p>Mind App Development Team © 2025</p>
+            <p>为更好的开发体验而构建</p>
+        </div>
+    </div>
+
+    <script>
+        // 添加一些交互效果
+        document.querySelectorAll('.card').forEach(card => {
+            if (card.style.opacity !== '0.6') {
+                card.addEventListener('mouseenter', function() {
+                    this.style.background = 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.background = 'white';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+

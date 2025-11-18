@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Align 和 ConstrainedBox 源码级设计分析</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header .back-btn {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+
+        .subsection-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0 10px 0;
+            color: #555;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 15px 0;
+            line-height: 1.6;
+        }
+
+        .keyword {
+            color: #66d9ef;
+        }
+
+        .string {
+            color: #e6db74;
+        }
+
+        .number {
+            color: #ae81ff;
+        }
+
+        .comment {
+            color: #75715e;
+        }
+
+        .type {
+            color: #a6e22e;
+        }
+
+        .decorator {
+            color: #f92672;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .highlight-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .flow-diagram {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .flow-step {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .step-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .step-code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .comparison-table th {
+            background: #667eea;
+            color: white;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .key-point {
+            background: #fffacd;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .tree-view {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            line-height: 1.8;
+        }
+
+        .tree-view .indent {
+            color: #999;
+        }
+
+        .tree-view .node {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .tree-view .property {
+            color: #666;
+        }
+
+        ul.styled-list {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        ul.styled-list li {
+            margin: 8px 0;
+        }
+
+        .note {
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-btn">← 返回</a>
+            <h1>💻 Align 和 ConstrainedBox 源码级设计分析</h1>
+            <p>深入理解 Flutter 源码实现，揭秘约束传递机制</p>
+        </div>
+
+        <div class="content">
+            <!-- Container 源码分析 -->
+            <div class="section">
+                <div class="section-title">1️⃣ Container 源码分析</div>
+                
+                <div class="info-box">
+                    <strong>源码位置：</strong><code>flutter/lib/src/widgets/container.dart</code>
+                </div>
+
+                <div class="subsection-title">Container.build() 方法（简化版）</div>
+                
+                <div class="code-block">
+<span class="decorator">@override</span>
+<span class="type">Widget</span> <span class="keyword">build</span>(BuildContext context) {
+  <span class="type">Widget?</span> current = child;
+
+  <span class="comment">// 1. 处理 alignment（最先处理）</span>
+  <span class="keyword">if</span> (alignment != <span class="keyword">null</span>) {
+    current = <span class="type">Align</span>(
+      alignment: alignment!,
+      child: current,
+    );
+  }
+
+  <span class="comment">// 2. 处理 padding</span>
+  <span class="keyword">if</span> (padding != <span class="keyword">null</span>) {
+    current = <span class="type">Padding</span>(
+      padding: padding!,
+      child: current,
+    );
+  }
+
+  <span class="comment">// 3. 处理 constraints（在 alignment 之后）</span>
+  <span class="keyword">if</span> (constraints != <span class="keyword">null</span>) {
+    current = <span class="type">ConstrainedBox</span>(
+      constraints: constraints!,
+      child: current,
+    );
+  }
+
+  <span class="comment">// 4. 处理 decoration</span>
+  <span class="keyword">if</span> (decoration != <span class="keyword">null</span>) {
+    current = <span class="type">DecoratedBox</span>(
+      decoration: decoration!,
+      child: current,
+    );
+  }
+
+  <span class="comment">// 5. 处理 foregroundDecoration</span>
+  <span class="keyword">if</span> (foregroundDecoration != <span class="keyword">null</span>) {
+    current = <span class="type">DecoratedBox</span>(
+      decoration: foregroundDecoration!,
+      position: DecorationPosition.foreground,
+      child: current,
+    );
+  }
+
+  <span class="comment">// 6. 处理 transform</span>
+  <span class="keyword">if</span> (transform != <span class="keyword">null</span>) {
+    current = <span class="type">Transform</span>(
+      transform: transform!,
+      alignment: transformAlignment,
+      child: current,
+    );
+  }
+
+  <span class="keyword">return</span> current ?? <span class="type">SizedBox</span>.shrink();
+}
+                </div>
+
+                <div class="highlight-box">
+                    <strong>🔑 关键发现：</strong><br>
+                    <ul class="styled-list">
+                        <li><code>alignment</code> 参数<strong>最先</strong>被处理，创建 Align Widget</li>
+                        <li><code>constraints</code> 参数<strong>后</strong>被处理，创建 ConstrainedBox</li>
+                        <li>ConstrainedBox 是 Align 的<strong>子Widget</strong>，而不是父Widget</li>
+                        <li>这种顺序导致 ConstrainedBox 无法约束 Container 的最终尺寸</li>
+                    </ul>
+                </div>
+
+                <div class="tree-view">
+<span class="comment">// Widget 树结构（当同时设置 alignment 和 constraints）</span>
+Container
+<span class="indent">└──</span> <span class="node">Align</span> <span class="property">(因为 alignment != null)</span>
+    <span class="indent">└──</span> <span class="node">Padding</span> <span class="property">(如果有 padding)</span>
+        <span class="indent">└──</span> <span class="node">ConstrainedBox</span> <span class="property">(因为 constraints != null)</span>
+            <span class="indent">└──</span> <span class="node">DecoratedBox</span> <span class="property">(如果有 decoration)</span>
+                <span class="indent">└──</span> <span class="node">child</span>
+                </div>
+            </div>
+
+            <!-- Align 源码分析 -->
+            <div class="section">
+                <div class="section-title">2️⃣ Align 源码分析</div>
+
+                <div class="info-box">
+                    <strong>源码位置：</strong>
+                    <ul style="margin-top: 10px;">
+                        <li>Widget: <code>flutter/lib/src/widgets/basic.dart</code></li>
+                        <li>RenderObject: <code>flutter/lib/src/rendering/shifted_box.dart</code></li>
+                    </ul>
+                </div>
+
+                <div class="subsection-title">2.1 Align Widget 定义</div>
+
+                <div class="code-block">
+<span class="keyword">class</span> <span class="type">Align</span> <span class="keyword">extends</span> <span class="type">SingleChildRenderObjectWidget</span> {
+  <span class="keyword">const</span> <span class="type">Align</span>({
+    Key? key,
+    <span class="keyword">this</span>.alignment = Alignment.center,
+    <span class="keyword">this</span>.widthFactor,  <span class="comment">// 宽度因子（null 表示填满）</span>
+    <span class="keyword">this</span>.heightFactor, <span class="comment">// 高度因子（null 表示填满）</span>
+    Widget? child,
+  }) : <span class="keyword">super</span>(key: key, child: child);
+
+  <span class="keyword">final</span> <span class="type">AlignmentGeometry</span> alignment;
+  <span class="keyword">final</span> <span class="type">double?</span> widthFactor;
+  <span class="keyword">final</span> <span class="type">double?</span> heightFactor;
+
+  <span class="decorator">@override</span>
+  <span class="type">RenderPositionedBox</span> createRenderObject(BuildContext context) {
+    <span class="keyword">return</span> <span class="type">RenderPositionedBox</span>(
+      alignment: alignment,
+      widthFactor: widthFactor,
+      heightFactor: heightFactor,
+      textDirection: Directionality.maybeOf(context),
+    );
+  }
+}
+                </div>
+
+                <div class="warning-box">
+                    <strong>⚠️ 关键参数：</strong><br>
+                    <ul class="styled-list">
+                        <li><code>widthFactor</code> 和 <code>heightFactor</code> 默认为 <strong>null</strong></li>
+                        <li>当 factor 为 null 时，Align <strong>填满父Widget的约束</strong></li>
+                        <li>当 factor 不为 null 时，尺寸 = child尺寸 × factor</li>
+                        <li>Container 创建 Align 时，<strong>没有设置</strong> widthFactor 和 heightFactor</li>
+                    </ul>
+                </div>
+
+                <div class="subsection-title">2.2 RenderPositionedBox 核心实现</div>
+
+                <div class="code-block">
+<span class="keyword">class</span> <span class="type">RenderPositionedBox</span> <span class="keyword">extends</span> <span class="type">RenderAligningShiftedBox</span> {
+  <span class="comment">// ...</span>
+
+  <span class="comment">// 核心方法1: performLayout - 执行布局</span>
+  <span class="decorator">@override</span>
+  <span class="keyword">void</span> performLayout() {
+    <span class="keyword">final</span> <span class="type">BoxConstraints</span> constraints = <span class="keyword">this</span>.constraints;
+    <span class="keyword">final</span> <span class="type">bool</span> shrinkWrapWidth = _widthFactor != <span class="keyword">null</span> || 
+                                 constraints.maxWidth == <span class="type">double</span>.infinity;
+    <span class="keyword">final</span> <span class="type">bool</span> shrinkWrapHeight = _heightFactor != <span class="keyword">null</span> || 
+                                  constraints.maxHeight == <span class="type">double</span>.infinity;
+
+    <span class="keyword">if</span> (child != <span class="keyword">null</span>) {
+      <span class="comment">// 1️⃣ 传递 Loose Constraints 给子Widget</span>
+      child!.layout(constraints.loosen(), parentUsesSize: <span class="keyword">true</span>);
+      
+      <span class="comment">// 2️⃣ 确定自己的尺寸</span>
+      size = constraints.constrain(<span class="type">Size</span>(
+        shrinkWrapWidth 
+          ? child!.size.width * (_widthFactor ?? <span class="number">1.0</span>)
+          : <span class="type">double</span>.infinity,  <span class="comment">// ⚠️ 关键：填满最大宽度</span>
+        shrinkWrapHeight 
+          ? child!.size.height * (_heightFactor ?? <span class="number">1.0</span>)
+          : <span class="type">double</span>.infinity,  <span class="comment">// ⚠️ 关键：填满最大高度</span>
+      ));
+      
+      <span class="comment">// 3️⃣ 对齐子Widget</span>
+      alignChild();
+    } <span class="keyword">else</span> {
+      <span class="comment">// 没有子Widget，收缩到最小</span>
+      size = constraints.constrain(
+        Size(
+          shrinkWrapWidth ? <span class="number">0.0</span> : <span class="type">double</span>.infinity,
+          shrinkWrapHeight ? <span class="number">0.0</span> : <span class="type">double</span>.infinity,
+        ),
+      );
+    }
+  }
+}
+                </div>
+
+                <div class="highlight-box">
+                    <strong>🔑 核心逻辑解析：</strong><br><br>
+                    
+                    <strong>1. constraints.loosen()</strong><br>
+                    将父约束转换为 Loose Constraints（minWidth 和 minHeight 设为 0）：
+                    <div class="step-code">
+// 原约束: 0 ≤ width ≤ 300, 0 ≤ height ≤ 300
+// loosen() 后: 0 ≤ width ≤ 300, 0 ≤ height ≤ 300 (已经是 loose)
+                    </div>
+
+                    <strong>2. 尺寸计算</strong><br>
+                    当 widthFactor 和 heightFactor 都为 null 时：
+                    <div class="step-code">
+size = constraints.constrain(Size(
+  double.infinity,  // 宽度设为无穷大
+  double.infinity,  // 高度设为无穷大
+));
+
+// constraints.constrain() 会将无穷大约束到 maxWidth/maxHeight
+// 结果：size = Size(300, 300)  // 填满父约束！
+                    </div>
+
+                    <strong>3. alignChild()</strong><br>
+                    根据 alignment 参数将子Widget定位在 Align 内部。
+                </div>
+
+                <div class="subsection-title">2.3 BoxConstraints.loosen() 方法</div>
+
+                <div class="code-block">
+<span class="keyword">class</span> <span class="type">BoxConstraints</span> {
+  <span class="comment">// 将约束转换为 Loose Constraints</span>
+  <span class="type">BoxConstraints</span> loosen() {
+    <span class="keyword">return</span> <span class="type">BoxConstraints</span>(
+      minWidth: <span class="number">0.0</span>,        <span class="comment">// ⚠️ 最小宽度设为 0</span>
+      maxWidth: maxWidth,    <span class="comment">// 保持最大宽度</span>
+      minHeight: <span class="number">0.0</span>,       <span class="comment">// ⚠️ 最小高度设为 0</span>
+      maxHeight: maxHeight,  <span class="comment">// 保持最大高度</span>
+    );
+  }
+}
+                </div>
+            </div>
+
+            <!-- ConstrainedBox 源码分析 -->
+            <div class="section">
+                <div class="section-title">3️⃣ ConstrainedBox 源码分析</div>
+
+                <div class="info-box">
+                    <strong>源码位置：</strong>
+                    <ul style="margin-top: 10px;">
+                        <li>Widget: <code>flutter/lib/src/widgets/basic.dart</code></li>
+                        <li>RenderObject: <code>flutter/lib/src/rendering/proxy_box.dart</code></li>
+                    </ul>
+                </div>
+
+                <div class="subsection-title">3.1 ConstrainedBox Widget 定义</div>
+
+                <div class="code-block">
+<span class="keyword">class</span> <span class="type">ConstrainedBox</span> <span class="keyword">extends</span> <span class="type">SingleChildRenderObjectWidget</span> {
+  <span class="keyword">const</span> <span class="type">ConstrainedBox</span>({
+    Key? key,
+    <span class="keyword">required</span> <span class="keyword">this</span>.constraints,
+    Widget? child,
+  }) : <span class="keyword">super</span>(key: key, child: child);
+
+  <span class="keyword">final</span> <span class="type">BoxConstraints</span> constraints;
+
+  <span class="decorator">@override</span>
+  <span class="type">RenderConstrainedBox</span> createRenderObject(BuildContext context) {
+    <span class="keyword">return</span> <span class="type">RenderConstrainedBox</span>(
+      additionalConstraints: constraints,
+    );
+  }
+}
+                </div>
+
+                <div class="subsection-title">3.2 RenderConstrainedBox 核心实现</div>
+
+                <div class="code-block">
+<span class="keyword">class</span> <span class="type">RenderConstrainedBox</span> <span class="keyword">extends</span> <span class="type">RenderProxyBox</span> {
+  <span class="type">RenderConstrainedBox</span>({
+    RenderBox? child,
+    <span class="keyword">required</span> <span class="type">BoxConstraints</span> additionalConstraints,
+  }) : _additionalConstraints = additionalConstraints,
+       <span class="keyword">super</span>(child);
+
+  <span class="type">BoxConstraints</span> _additionalConstraints;
+
+  <span class="comment">// 核心方法: performLayout - 执行布局</span>
+  <span class="decorator">@override</span>
+  <span class="keyword">void</span> performLayout() {
+    <span class="keyword">if</span> (child != <span class="keyword">null</span>) {
+      <span class="comment">// 1️⃣ 合并约束：父约束 enforce additionalConstraints</span>
+      child!.layout(
+        _additionalConstraints.enforce(constraints),
+        parentUsesSize: <span class="keyword">true</span>,
+      );
+      
+      <span class="comment">// 2️⃣ ConstrainedBox 的尺寸 = 子Widget的尺寸</span>
+      size = child!.size;
+    } <span class="keyword">else</span> {
+      <span class="comment">// 没有子Widget，使用约束的最小尺寸</span>
+      size = _additionalConstraints.enforce(constraints).constrain(Size.zero);
+    }
+  }
+}
+                </div>
+
+                <div class="subsection-title">3.3 BoxConstraints.enforce() 方法</div>
+
+                <div class="code-block">
+<span class="keyword">class</span> <span class="type">BoxConstraints</span> {
+  <span class="comment">// 合并两个约束，取更严格的限制</span>
+  <span class="type">BoxConstraints</span> enforce(<span class="type">BoxConstraints</span> constraints) {
+    <span class="keyword">return</span> <span class="type">BoxConstraints</span>(
+      <span class="comment">// 最小值取两者的最大值</span>
+      minWidth: minWidth.clamp(constraints.minWidth, constraints.maxWidth),
+      maxWidth: maxWidth.clamp(constraints.minWidth, constraints.maxWidth),
+      minHeight: minHeight.clamp(constraints.minHeight, constraints.maxHeight),
+      maxHeight: maxHeight.clamp(constraints.minHeight, constraints.maxHeight),
+    );
+  }
+}
+
+<span class="comment">// 示例：</span>
+<span class="comment">// 父约束: BoxConstraints(0, 300, 0, 300)</span>
+<span class="comment">// additionalConstraints: BoxConstraints(0, 100, 0, 100)</span>
+<span class="comment">// 结果: BoxConstraints(0, 100, 0, 100)  // 取更严格的限制</span>
+                </div>
+
+                <div class="highlight-box">
+                    <strong>🔑 ConstrainedBox 的工作原理：</strong><br><br>
+                    
+                    <strong>1. 合并约束</strong><br>
+                    使用 <code>enforce()</code> 方法合并父约束和自身约束，取更严格的限制：
+                    <div class="step-code">
+// 父约束: 0 ≤ width ≤ 300 (来自 Align)
+// 自身约束: 0 ≤ width ≤ 100 (additionalConstraints)
+// 合并后: 0 ≤ width ≤ 100 (取 min(300, 100) = 100)
+                    </div>
+
+                    <strong>2. 传递给子Widget</strong><br>
+                    将合并后的约束传递给子Widget。
+
+                    <strong>3. 自身尺寸</strong><br>
+                    ConstrainedBox 的尺寸<strong>等于</strong>子Widget的尺寸（不会额外占用空间）。
+                </div>
+            </div>
+
+            <!-- 完整布局流程 -->
+            <div class="section">
+                <div class="section-title">4️⃣ 完整布局流程（源码级别）</div>
+
+                <div class="flow-diagram">
+                    <h4 style="margin-bottom: 15px;">场景：Container 同时设置 alignment 和 constraints</h4>
+
+                    <div class="flow-step">
+                        <div class="step-title">步骤1: 父Widget传递约束给 Container</div>
+                        <div class="step-code">
+// 父Widget → Container
+constraints = BoxConstraints(
+  minWidth: 0, maxWidth: 300,
+  minHeight: 0, maxHeight: 300,
+)
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="step-title">步骤2: Container.build() 创建 Widget 树</div>
+                        <div class="step-code">
+// Container 内部创建：
+Align(
+  alignment: Alignment.center,
+  child: ConstrainedBox(
+    constraints: BoxConstraints(maxWidth: 100, maxHeight: 100),
+    child: Text('Hello'),
+  ),
+)
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="step-title">步骤3: RenderPositionedBox.performLayout() - Align 布局</div>
+                        <div class="step-code">
+// 1. 创建 Loose Constraints
+looseConstraints = constraints.loosen()
+// 结果: BoxConstraints(0, 300, 0, 300)
+
+// 2. 传递给子Widget (ConstrainedBox)
+child.layout(looseConstraints, parentUsesSize: true)
+
+// 3. 计算自己的尺寸（widthFactor 和 heightFactor 都是 null）
+size = constraints.constrain(Size(
+  double.infinity,  // 无穷大
+  double.infinity,  // 无穷大
+))
+// 结果: size = Size(300, 300)  ⚠️ 填满父约束！
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="step-title">步骤4: RenderConstrainedBox.performLayout() - ConstrainedBox 布局</div>
+                        <div class="step-code">
+// 1. 合并约束
+parentConstraints = BoxConstraints(0, 300, 0, 300)  // 来自 Align
+additionalConstraints = BoxConstraints(0, 100, 0, 100)  // 自己的约束
+
+enforcedConstraints = additionalConstraints.enforce(parentConstraints)
+// 结果: BoxConstraints(0, 100, 0, 100)
+
+// 2. 传递给子Widget (Text)
+child.layout(enforcedConstraints, parentUsesSize: true)
+
+// 3. 自己的尺寸 = 子Widget的尺寸
+size = child.size  // 假设 Text 是 Size(50, 20)
+// 结果: size = Size(50, 20)
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="step-title">步骤5: 尺寸向上返回</div>
+                        <div class="step-code">
+Text: Size(50, 20)
+  ↑
+ConstrainedBox: Size(50, 20)
+  ↑
+Align (RenderPositionedBox): Size(300, 300)  ⚠️
+  ↑
+Container: Size(300, 300)  ❌ 而不是期望的 100×100
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="step-title">步骤6: Align 定位子Widget</div>
+                        <div class="step-code">
+// RenderPositionedBox.alignChild()
+// 将 ConstrainedBox (50×20) 在 Align (300×300) 中居中
+childParentData.offset = Offset(
+  (300 - 50) / 2,  // x = 125
+  (300 - 20) / 2,  // y = 140
+)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 为什么 Align 填满父约束 -->
+            <div class="section">
+                <div class="section-title">5️⃣ 为什么 Align 会填满父约束？</div>
+
+                <div class="subsection-title">核心代码分析</div>
+
+                <div class="code-block">
+<span class="comment">// RenderPositionedBox.performLayout() 中的关键代码</span>
+
+<span class="keyword">final</span> <span class="type">bool</span> shrinkWrapWidth = _widthFactor != <span class="keyword">null</span> || 
+                             constraints.maxWidth == <span class="type">double</span>.infinity;
+<span class="keyword">final</span> <span class="type">bool</span> shrinkWrapHeight = _heightFactor != <span class="keyword">null</span> || 
+                              constraints.maxHeight == <span class="type">double</span>.infinity;
+
+size = constraints.constrain(<span class="type">Size</span>(
+  shrinkWrapWidth 
+    ? child!.size.width * (_widthFactor ?? <span class="number">1.0</span>)
+    : <span class="type">double</span>.infinity,  <span class="comment">// ⚠️ 这里！</span>
+  shrinkWrapHeight 
+    ? child!.size.height * (_heightFactor ?? <span class="number">1.0</span>)
+    : <span class="type">double</span>.infinity,  <span class="comment">// ⚠️ 这里！</span>
+));
+                </div>
+
+                <div class="info-box">
+                    <h4>逻辑分析：</h4>
+                    <ul class="styled-list">
+                        <li><strong>widthFactor 为 null</strong>：shrinkWrapWidth = false</li>
+                        <li><strong>heightFactor 为 null</strong>：shrinkWrapHeight = false</li>
+                        <li>因此，Size 被设为 <code>Size(double.infinity, double.infinity)</code></li>
+                        <li><code>constraints.constrain()</code> 会将无穷大限制在 maxWidth/maxHeight</li>
+                        <li>最终结果：<strong>Align 填满父约束的最大尺寸</strong></li>
+                    </ul>
+                </div>
+
+                <div class="subsection-title">设计意图</div>
+
+                <div class="success-box">
+                    <h4>Align 的设计目标：</h4>
+                    <ul class="styled-list">
+                        <li><strong>默认行为</strong>：填满父Widget，在其中对齐子Widget</li>
+                        <li><strong>可选收缩</strong>：通过 widthFactor/heightFactor 控制尺寸</li>
+                        <li><strong>灵活性</strong>：适应不同的使用场景</li>
+                    </ul>
+
+                    <h4 style="margin-top: 15px;">为什么这样设计？</h4>
+                    <p style="margin-top: 10px;">
+                        Align 的主要用途是<strong>在可用空间内对齐子Widget</strong>。如果 Align 收缩到子Widget的尺寸，
+                        就失去了"对齐"的意义（因为没有额外空间来进行对齐）。
+                    </p>
+                </div>
+
+                <div class="subsection-title">如何让 Align 不填满？</div>
+
+                <div class="code-block">
+<span class="comment">// 方法1: 设置 widthFactor 和 heightFactor</span>
+<span class="type">Align</span>(
+  alignment: Alignment.center,
+  widthFactor: <span class="number">1.0</span>,   <span class="comment">// 宽度 = child宽度 × 1.0</span>
+  heightFactor: <span class="number">1.0</span>,  <span class="comment">// 高度 = child高度 × 1.0</span>
+  child: <span class="type">Text</span>(<span class="string">'Hello'</span>),
+)
+<span class="comment">// 结果：Align 的尺寸等于 child 的尺寸</span>
+
+<span class="comment">// 方法2: 使用 Center (它就是 widthFactor/heightFactor = null 的 Align)</span>
+<span class="type">Center</span>(child: <span class="type">Text</span>(<span class="string">'Hello'</span>))
+<span class="comment">// 等价于：</span>
+<span class="type">Align</span>(
+  alignment: Alignment.center,
+  widthFactor: <span class="keyword">null</span>,   <span class="comment">// 填满宽度</span>
+  heightFactor: <span class="keyword">null</span>,  <span class="comment">// 填满高度</span>
+  child: <span class="type">Text</span>(<span class="string">'Hello'</span>),
+)
+                </div>
+            </div>
+
+            <!-- 对比总结 -->
+            <div class="section">
+                <div class="section-title">6️⃣ Align vs ConstrainedBox 对比</div>
+
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>特性</th>
+                            <th>Align</th>
+                            <th>ConstrainedBox</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>主要用途</strong></td>
+                            <td>在可用空间内对齐子Widget</td>
+                            <td>限制子Widget的约束范围</td>
+                        </tr>
+                        <tr>
+                            <td><strong>约束传递</strong></td>
+                            <td>传递 Loose Constraints（minWidth/Height = 0）</td>
+                            <td>合并父约束和自身约束（取更严格的）</td>
+                        </tr>
+                        <tr>
+                            <td><strong>自身尺寸</strong></td>
+                            <td>默认填满父约束（除非设置 factor）</td>
+                            <td>等于子Widget的尺寸</td>
+                        </tr>
+                        <tr>
+                            <td><strong>对子Widget的影响</strong></td>
+                            <td>允许子Widget自由选择尺寸（在约束范围内）</td>
+                            <td>限制子Widget的最大/最小尺寸</td>
+                        </tr>
+                        <tr>
+                            <td><strong>性能</strong></td>
+                            <td>需要计算对齐位置</td>
+                            <td>简单的约束合并</td>
+                        </tr>
+                        <tr>
+                            <td><strong>RenderObject</strong></td>
+                            <td>RenderPositionedBox</td>
+                            <td>RenderConstrainedBox (继承自 RenderProxyBox)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 总结 -->
+            <div class="section">
+                <div class="section-title">7️⃣ 总结</div>
+
+                <div class="success-box">
+                    <h4>🎯 核心原因（源码级别）：</h4>
+                    <ol class="styled-list">
+                        <li><strong>Container 的 build() 顺序</strong>：先处理 alignment（创建 Align），后处理 constraints（创建 ConstrainedBox）</li>
+                        <li><strong>Align 的设计</strong>：当 widthFactor/heightFactor 为 null 时，size = Size(infinity, infinity)，被 constrain() 后填满父约束</li>
+                        <li><strong>ConstrainedBox 的位置</strong>：在 Align 内部，只能约束它的子Widget，无法影响 Align 的尺寸</li>
+                        <li><strong>约束传递方向</strong>：只能从父到子，ConstrainedBox 无法"向上"约束 Align</li>
+                    </ol>
+                </div>
+
+                <div class="warning-box">
+                    <h4>⚠️ 关键知识点：</h4>
+                    <ul class="styled-list">
+                        <li><code>Align.performLayout()</code> 中，当 factor 为 null 时，会设置 <code>size = infinity</code></li>
+                        <li><code>constraints.constrain(Size(infinity, infinity))</code> 会返回 <code>Size(maxWidth, maxHeight)</code></li>
+                        <li><code>ConstrainedBox.performLayout()</code> 中，<code>size = child.size</code>，不会额外占用空间</li>
+                        <li>Widget 树的嵌套顺序决定了约束传递的方向和结果</li>
+                    </ul>
+                </div>
+
+                <div class="info-box">
+                    <h4>💡 最佳实践：</h4>
+                    <ul class="styled-list">
+                        <li>理解每个 Widget 的源码实现和布局逻辑</li>
+                        <li>注意 Widget 树的构建顺序</li>
+                        <li>避免在 Container 中同时使用 alignment 和 constraints</li>
+                        <li>需要约束尺寸时，在 Container 外部使用 ConstrainedBox 或 SizedBox</li>
+                        <li>使用 <code>widthFactor</code>/<code>heightFactor</code> 控制 Align 的尺寸</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

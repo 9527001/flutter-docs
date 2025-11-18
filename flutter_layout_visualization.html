@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flutter Layout 布局机制可视化</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        /* 头部 */
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .header .back-btn {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .header .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 示例选择器 */
+        .example-selector {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .example-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .example-tab {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .example-tab:hover {
+            border-color: #4facfe;
+            transform: translateY(-2px);
+        }
+
+        .example-tab.active {
+            background: #4facfe;
+            color: white;
+            border-color: #4facfe;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+
+        /* 左侧：布局可视化 */
+        .layout-visualization {
+            flex: 2;
+            padding: 30px;
+            background: #fafafa;
+        }
+
+        .layout-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .layout-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        /* 布局演示区 */
+        .layout-demo {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f0f4ff;
+            border-radius: 8px;
+            border: 2px dashed #4facfe;
+        }
+
+        .constraint-box {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #4facfe;
+        }
+
+        .constraint-title {
+            font-weight: bold;
+            color: #4facfe;
+            margin-bottom: 10px;
+        }
+
+        .constraint-value {
+            font-family: 'Courier New', monospace;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 布局流程图 */
+        .flow-diagram {
+            margin: 30px 0;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: #4facfe;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 3px solid #4facfe;
+        }
+
+        .step-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .step-description {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .arrow-down {
+            text-align: center;
+            color: #4facfe;
+            font-size: 24px;
+            margin: 5px 0;
+        }
+
+        /* 可视化盒子 */
+        .visual-box {
+            position: relative;
+            border: 2px solid #333;
+            padding: 10px;
+            margin: 10px;
+            display: inline-block;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .visual-box:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: scale(1.02);
+        }
+
+        .visual-box.parent {
+            border-color: #e74c3c;
+            background: rgba(231, 76, 60, 0.05);
+        }
+
+        .visual-box.child {
+            border-color: #3498db;
+            background: rgba(52, 152, 219, 0.05);
+        }
+
+        .box-label {
+            position: absolute;
+            top: -12px;
+            left: 10px;
+            background: white;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .box-size {
+            font-size: 11px;
+            color: #999;
+            margin-top: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* 右侧：控制面板 */
+        .control-panel {
+            flex: 1;
+            padding: 30px;
+            background: white;
+            border-left: 1px solid #e0e0e0;
+            overflow-y: auto;
+        }
+
+        .panel-section {
+            margin-bottom: 30px;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: #4facfe;
+            border-radius: 2px;
+        }
+
+        /* 信息框 */
+        .info-box {
+            padding: 20px;
+            background: #f0f4ff;
+            border-left: 4px solid #4facfe;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h4 {
+            margin-bottom: 10px;
+            color: #4facfe;
+        }
+
+        .info-box p {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #555;
+            white-space: pre-line;
+        }
+
+        .info-box ul {
+            margin-top: 10px;
+            padding-left: 20px;
+        }
+
+        .info-box li {
+            font-size: 13px;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        /* 代码框 */
+        .code-box {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .code-box .keyword {
+            color: #66d9ef;
+        }
+
+        .code-box .string {
+            color: #e6db74;
+        }
+
+        .code-box .comment {
+            color: #75715e;
+        }
+
+        /* 控制器 */
+        .controls {
+            margin: 20px 0;
+        }
+
+        .control-item {
+            margin: 15px 0;
+        }
+
+        .control-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4facfe;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4facfe;
+            cursor: pointer;
+        }
+
+        .value-display {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #4facfe;
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        /* 按钮 */
+        .btn {
+            padding: 10px 20px;
+            background: #4facfe;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #3d8fce;
+            transform: translateY(-2px);
+        }
+
+        .btn.secondary {
+            background: #95a5a6;
+        }
+
+        .btn.secondary:hover {
+            background: #7f8c8d;
+        }
+
+        /* 高亮框 */
+        .highlight-box {
+            padding: 15px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .highlight-box strong {
+            color: #856404;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .control-panel {
+                border-left: none;
+                border-top: 1px solid #e0e0e0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <a href="index.html" class="back-btn">← 返回首页</a>
+            <h1>📐 Flutter Layout 布局机制可视化</h1>
+            <p>深入理解约束传递、尺寸确定和布局流程</p>
+        </div>
+
+        <!-- 示例选择器 -->
+        <div class="example-selector">
+            <div class="example-tabs" id="exampleTabs"></div>
+        </div>
+
+        <!-- 主内容 -->
+        <div class="main-content">
+            <!-- 左侧：布局可视化 -->
+            <div class="layout-visualization">
+                <div class="layout-container">
+                    <div class="layout-title">布局演示</div>
+                    <div id="layoutDemo"></div>
+                </div>
+            </div>
+
+            <!-- 右侧：控制面板 -->
+            <div class="control-panel" id="controlPanel"></div>
+        </div>
+    </div>
+
+    <script>
+        // 应用状态管理
+        const app = {
+            currentExample: 0,
+            
+            // 可调节的参数
+            params: {
+                parentWidth: 300,
+                parentHeight: 200,
+                childWidth: 150,
+                childHeight: 100,
+            },
+
+            // 示例数据
+            examples: [
+                {
+                    title: '基础约束传递',
+                    description: 'Constraints go down, Sizes go up',
+                    type: 'basic'
+                },
+                {
+                    title: 'Tight Constraints',
+                    description: '严格约束 - 父Widget强制子Widget尺寸',
+                    type: 'tight'
+                },
+                {
+                    title: 'Loose Constraints',
+                    description: '宽松约束 - 子Widget可以自由选择尺寸',
+                    type: 'loose'
+                },
+                {
+                    title: 'Unbounded Constraints',
+                    description: '无界约束 - 无限制的布局空间',
+                    type: 'unbounded'
+                },
+                {
+                    title: 'Center 布局',
+                    description: 'Center Widget 如何布局子Widget',
+                    type: 'center'
+                },
+                {
+                    title: 'Padding 布局',
+                    description: 'Padding 如何影响约束和尺寸',
+                    type: 'padding'
+                }
+            ],
+
+            // 初始化
+            init() {
+                this.renderExampleTabs();
+                this.selectExample(0);
+            },
+
+            // 渲染示例标签
+            renderExampleTabs() {
+                const container = document.getElementById('exampleTabs');
+                container.innerHTML = this.examples.map((example, index) => `
+                    <div class="example-tab ${index === 0 ? 'active' : ''}" 
+                         onclick="app.selectExample(${index})" 
+                         id="tab-${index}">
+                        <strong>${example.title}</strong>
+                        <br>
+                        <small>${example.description}</small>
+                    </div>
+                `).join('');
+            },
+
+            // 选择示例
+            selectExample(index) {
+                this.currentExample = index;
+
+                // 更新标签样式
+                document.querySelectorAll('.example-tab').forEach((tab, i) => {
+                    tab.classList.toggle('active', i === index);
+                });
+
+                this.render();
+            },
+
+            // 渲染
+            render() {
+                this.renderLayoutDemo();
+                this.renderControlPanel();
+            },
+
+            // 渲染布局演示
+            renderLayoutDemo() {
+                const example = this.examples[this.currentExample];
+                const container = document.getElementById('layoutDemo');
+                
+                switch (example.type) {
+                    case 'basic':
+                        container.innerHTML = this.renderBasicLayout();
+                        break;
+                    case 'tight':
+                        container.innerHTML = this.renderTightLayout();
+                        break;
+                    case 'loose':
+                        container.innerHTML = this.renderLooseLayout();
+                        break;
+                    case 'unbounded':
+                        container.innerHTML = this.renderUnboundedLayout();
+                        break;
+                    case 'center':
+                        container.innerHTML = this.renderCenterLayout();
+                        break;
+                    case 'padding':
+                        container.innerHTML = this.renderPaddingLayout();
+                        break;
+                }
+            },
+
+            // 基础布局
+            renderBasicLayout() {
+                return `
+                    <div class="flow-diagram">
+                        <div class="flow-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-title">父Widget传递约束 (Constraints go down)</div>
+                                <div class="step-description">
+                                    父Widget告诉子Widget可用的尺寸范围<br>
+                                    minWidth: 0, maxWidth: ${this.params.parentWidth}<br>
+                                    minHeight: 0, maxHeight: ${this.params.parentHeight}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="arrow-down">↓</div>
+                        
+                        <div class="flow-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-title">子Widget确定尺寸 (Sizes go up)</div>
+                                <div class="step-description">
+                                    子Widget在约束范围内选择自己的尺寸<br>
+                                    选择的尺寸: ${this.params.childWidth} × ${this.params.childHeight}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="arrow-down">↓</div>
+                        
+                        <div class="flow-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-title">父Widget定位子Widget (Parent sets position)</div>
+                                <div class="step-description">
+                                    父Widget决定子Widget的位置<br>
+                                    子Widget无法决定自己的位置
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layout-demo">
+                        <div class="visual-box parent" style="width: ${this.params.parentWidth}px; height: ${this.params.parentHeight}px;">
+                            <span class="box-label">Parent</span>
+                            <div class="visual-box child" style="width: ${this.params.childWidth}px; height: ${this.params.childHeight}px;">
+                                <span class="box-label">Child</span>
+                                <div class="box-size">${this.params.childWidth} × ${this.params.childHeight}</div>
+                            </div>
+                            <div class="box-size">${this.params.parentWidth} × ${this.params.parentHeight}</div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // Tight Constraints
+            renderTightLayout() {
+                return `
+                    <div class="info-box">
+                        <h4>Tight Constraints（严格约束）</h4>
+                        <p>当 minWidth == maxWidth 且 minHeight == maxHeight 时，这是严格约束。
+子Widget必须使用精确指定的尺寸，没有选择的余地。</p>
+                    </div>
+
+                    <div class="constraint-box">
+                        <div class="constraint-title">约束条件</div>
+                        <div class="constraint-value">
+                            minWidth: ${this.params.parentWidth}, maxWidth: ${this.params.parentWidth}<br>
+                            minHeight: ${this.params.parentHeight}, maxHeight: ${this.params.parentHeight}<br>
+                            <strong style="color: #e74c3c;">这是 Tight Constraint！子Widget必须是 ${this.params.parentWidth} × ${this.params.parentHeight}</strong>
+                        </div>
+                    </div>
+
+                    <div class="layout-demo">
+                        <div class="visual-box parent" style="width: ${this.params.parentWidth}px; height: ${this.params.parentHeight}px;">
+                            <span class="box-label">Parent (Tight)</span>
+                            <div class="visual-box child" style="width: 100%; height: 100%;">
+                                <span class="box-label">Child (被迫填满)</span>
+                                <div class="box-size">${this.params.parentWidth} × ${this.params.parentHeight}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="code-box">
+<span class="comment">// 常见的 Tight Constraints 场景</span>
+<span class="keyword">SizedBox</span>(
+  width: <span class="string">100</span>,
+  height: <span class="string">100</span>,
+  child: <span class="keyword">Container</span>(), <span class="comment">// Container 被迫为 100×100</span>
+)
+                    </div>
+                `;
+            },
+
+            // Loose Constraints
+            renderLooseLayout() {
+                return `
+                    <div class="info-box">
+                        <h4>Loose Constraints（宽松约束）</h4>
+                        <p>当 minWidth == 0 且 minHeight == 0 时，这是宽松约束。
+子Widget可以在 0 到 maxWidth/maxHeight 之间自由选择尺寸。</p>
+                    </div>
+
+                    <div class="constraint-box">
+                        <div class="constraint-title">约束条件</div>
+                        <div class="constraint-value">
+                            minWidth: 0, maxWidth: ${this.params.parentWidth}<br>
+                            minHeight: 0, maxHeight: ${this.params.parentHeight}<br>
+                            <strong style="color: #27ae60;">这是 Loose Constraint！子Widget可以自由选择尺寸</strong>
+                        </div>
+                    </div>
+
+                    <div class="layout-demo">
+                        <div class="visual-box parent" style="width: ${this.params.parentWidth}px; height: ${this.params.parentHeight}px;">
+                            <span class="box-label">Parent (Loose)</span>
+                            <div class="visual-box child" style="width: ${this.params.childWidth}px; height: ${this.params.childHeight}px;">
+                                <span class="box-label">Child (自由尺寸)</span>
+                                <div class="box-size">${this.params.childWidth} × ${this.params.childHeight}</div>
+                            </div>
+                            <div class="box-size">${this.params.parentWidth} × ${this.params.parentHeight}</div>
+                        </div>
+                    </div>
+
+                    <div class="code-box">
+<span class="comment">// Center 会传递 Loose Constraints</span>
+<span class="keyword">Center</span>(
+  child: <span class="keyword">Container</span>(
+    width: <span class="string">100</span>,
+    height: <span class="string">50</span>, <span class="comment">// 可以自由选择尺寸</span>
+  ),
+)
+                    </div>
+                `;
+            },
+
+            // Unbounded Constraints
+            renderUnboundedLayout() {
+                return `
+                    <div class="info-box">
+                        <h4>Unbounded Constraints（无界约束）</h4>
+                        <p>当 maxWidth 或 maxHeight 为无穷大时，这是无界约束。
+这种情况很危险，容易导致布局错误。</p>
+                    </div>
+
+                    <div class="highlight-box">
+                        <strong>⚠️ 警告：</strong> ListView、Row、Column 等会产生无界约束！<br>
+                        如果子Widget没有明确尺寸，会导致错误。
+                    </div>
+
+                    <div class="constraint-box">
+                        <div class="constraint-title">约束条件</div>
+                        <div class="constraint-value">
+                            minWidth: 0, maxWidth: <strong style="color: #e74c3c;">∞ (infinity)</strong><br>
+                            minHeight: 0, maxHeight: ${this.params.parentHeight}<br>
+                            <strong style="color: #e74c3c;">这是 Unbounded Constraint！必须给子Widget明确尺寸</strong>
+                        </div>
+                    </div>
+
+                    <div class="code-box">
+<span class="comment">// ❌ 错误：ListView 中的 Container 没有明确宽度</span>
+<span class="keyword">ListView</span>(
+  children: [
+    <span class="keyword">Container</span>(), <span class="comment">// 报错！maxWidth 是 infinity</span>
+  ],
+)
+
+<span class="comment">// ✅ 正确：使用 SizedBox 给明确尺寸</span>
+<span class="keyword">ListView</span>(
+  children: [
+    <span class="keyword">SizedBox</span>(
+      width: <span class="string">100</span>,
+      child: <span class="keyword">Container</span>(),
+    ),
+  ],
+)
+                    </div>
+                `;
+            },
+
+            // Center布局
+            renderCenterLayout() {
+                const centerX = (this.params.parentWidth - this.params.childWidth) / 2;
+                const centerY = (this.params.parentHeight - this.params.childHeight) / 2;
+                
+                return `
+                    <div class="info-box">
+                        <h4>Center Widget 布局流程</h4>
+                        <ul>
+                            <li>1. 接收父Widget的约束</li>
+                            <li>2. 传递 Loose Constraints 给子Widget</li>
+                            <li>3. 获取子Widget的尺寸</li>
+                            <li>4. 将子Widget居中定位</li>
+                            <li>5. Center自身填满父Widget的约束</li>
+                        </ul>
+                    </div>
+
+                    <div class="flow-diagram">
+                        <div class="flow-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-title">Center 接收约束</div>
+                                <div class="step-description">
+                                    约束: 0 ≤ width ≤ ${this.params.parentWidth}, 0 ≤ height ≤ ${this.params.parentHeight}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="arrow-down">↓</div>
+                        
+                        <div class="flow-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-title">传递 Loose Constraints</div>
+                                <div class="step-description">
+                                    子Widget可以自由选择尺寸（0 到 max）
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="arrow-down">↓</div>
+                        
+                        <div class="flow-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-title">子Widget返回尺寸</div>
+                                <div class="step-description">
+                                    子Widget尺寸: ${this.params.childWidth} × ${this.params.childHeight}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="arrow-down">↓</div>
+                        
+                        <div class="flow-step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <div class="step-title">Center 定位子Widget</div>
+                                <div class="step-description">
+                                    位置: (${Math.round(centerX)}, ${Math.round(centerY)}) - 居中对齐
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layout-demo">
+                        <div class="visual-box parent" style="width: ${this.params.parentWidth}px; height: ${this.params.parentHeight}px; position: relative;">
+                            <span class="box-label">Parent</span>
+                            <div style="position: absolute; top: ${centerY}px; left: ${centerX}px;">
+                                <div class="visual-box child" style="width: ${this.params.childWidth}px; height: ${this.params.childHeight}px;">
+                                    <span class="box-label">Child (居中)</span>
+                                    <div class="box-size">${this.params.childWidth} × ${this.params.childHeight}</div>
+                                </div>
+                            </div>
+                            <div class="box-size">${this.params.parentWidth} × ${this.params.parentHeight}</div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // Padding布局
+            renderPaddingLayout() {
+                const padding = 20;
+                const innerWidth = this.params.parentWidth - padding * 2;
+                const innerHeight = this.params.parentHeight - padding * 2;
+                
+                return `
+                    <div class="info-box">
+                        <h4>Padding Widget 布局流程</h4>
+                        <ul>
+                            <li>1. 接收父Widget的约束</li>
+                            <li>2. 从约束中减去 padding 值</li>
+                            <li>3. 传递收缩后的约束给子Widget</li>
+                            <li>4. 获取子Widget的尺寸</li>
+                            <li>5. Padding尺寸 = 子Widget尺寸 + padding</li>
+                        </ul>
+                    </div>
+
+                    <div class="flow-diagram">
+                        <div class="flow-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-title">Padding 接收约束</div>
+                                <div class="step-description">
+                                    约束: 0 ≤ width ≤ ${this.params.parentWidth}, 0 ≤ height ≤ ${this.params.parentHeight}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="arrow-down">↓</div>
+                        
+                        <div class="flow-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-title">计算子Widget可用空间</div>
+                                <div class="step-description">
+                                    padding: ${padding}px (all)<br>
+                                    可用空间: ${innerWidth} × ${innerHeight} (减去padding后)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="arrow-down">↓</div>
+                        
+                        <div class="flow-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-title">传递收缩的约束</div>
+                                <div class="step-description">
+                                    新约束: 0 ≤ width ≤ ${innerWidth}, 0 ≤ height ≤ ${innerHeight}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layout-demo">
+                        <div class="visual-box parent" style="width: ${this.params.parentWidth}px; height: ${this.params.parentHeight}px;">
+                            <span class="box-label">Padding (${padding}px)</span>
+                            <div style="padding: ${padding}px;">
+                                <div class="visual-box child" style="width: ${Math.min(this.params.childWidth, innerWidth)}px; height: ${Math.min(this.params.childHeight, innerHeight)}px;">
+                                    <span class="box-label">Child</span>
+                                    <div class="box-size">${Math.min(this.params.childWidth, innerWidth)} × ${Math.min(this.params.childHeight, innerHeight)}</div>
+                                </div>
+                            </div>
+                            <div class="box-size">${this.params.parentWidth} × ${this.params.parentHeight}</div>
+                        </div>
+                    </div>
+
+                    <div class="code-box">
+<span class="keyword">Padding</span>(
+  padding: EdgeInsets.all(<span class="string">${padding}</span>),
+  child: <span class="keyword">Container</span>(
+    width: <span class="string">${Math.min(this.params.childWidth, innerWidth)}</span>,
+    height: <span class="string">${Math.min(this.params.childHeight, innerHeight)}</span>,
+  ),
+)
+                    </div>
+                `;
+            },
+
+            // 渲染控制面板
+            renderControlPanel() {
+                const example = this.examples[this.currentExample];
+                const container = document.getElementById('controlPanel');
+                
+                container.innerHTML = `
+                    <!-- 核心原则 -->
+                    <div class="panel-section">
+                        <div class="panel-title">Flutter Layout 核心原则</div>
+                        <div class="info-box">
+                            <h4>三个黄金法则</h4>
+                            <p><strong>1. Constraints go down</strong>
+约束从上往下传递（父→子）
+
+<strong>2. Sizes go up</strong>
+尺寸从下往上返回（子→父）
+
+<strong>3. Parent sets position</strong>
+父Widget决定子Widget的位置</p>
+                        </div>
+                    </div>
+
+                    <!-- 参数控制 -->
+                    <div class="panel-section">
+                        <div class="panel-title">调整参数</div>
+                        <div class="controls">
+                            <div class="control-item">
+                                <label class="control-label">
+                                    父Widget宽度
+                                    <span class="value-display">${this.params.parentWidth}px</span>
+                                </label>
+                                <input type="range" class="slider" min="200" max="400" 
+                                       value="${this.params.parentWidth}" 
+                                       oninput="app.updateParam('parentWidth', this.value)">
+                            </div>
+                            
+                            <div class="control-item">
+                                <label class="control-label">
+                                    父Widget高度
+                                    <span class="value-display">${this.params.parentHeight}px</span>
+                                </label>
+                                <input type="range" class="slider" min="150" max="300" 
+                                       value="${this.params.parentHeight}" 
+                                       oninput="app.updateParam('parentHeight', this.value)">
+                            </div>
+                            
+                            <div class="control-item">
+                                <label class="control-label">
+                                    子Widget宽度
+                                    <span class="value-display">${this.params.childWidth}px</span>
+                                </label>
+                                <input type="range" class="slider" min="50" max="300" 
+                                       value="${this.params.childWidth}" 
+                                       oninput="app.updateParam('childWidth', this.value)">
+                            </div>
+                            
+                            <div class="control-item">
+                                <label class="control-label">
+                                    子Widget高度
+                                    <span class="value-display">${this.params.childHeight}px</span>
+                                </label>
+                                <input type="range" class="slider" min="50" max="200" 
+                                       value="${this.params.childHeight}" 
+                                       oninput="app.updateParam('childHeight', this.value)">
+                            </div>
+                            
+                            <button class="btn" onclick="app.resetParams()">重置参数</button>
+                        </div>
+                    </div>
+
+                    <!-- 示例说明 -->
+                    <div class="panel-section">
+                        <div class="panel-title">当前示例说明</div>
+                        ${this.getExampleDescription(example)}
+                    </div>
+
+                    <!-- 常见问题 -->
+                    <div class="panel-section">
+                        <div class="panel-title">常见问题</div>
+                        <div class="info-box">
+                            <h4>为什么子Widget不能决定自己的位置？</h4>
+                            <p>这是Flutter的设计哲学。子Widget只负责确定自己的尺寸，位置由父Widget根据布局策略决定。这样可以让布局逻辑更加清晰和可预测。</p>
+                        </div>
+                        
+                        <div class="info-box">
+                            <h4>什么时候会遇到布局错误？</h4>
+                            <p>最常见的是在ListView、Row、Column等Widget中使用没有明确尺寸的子Widget。这些Widget会传递无界约束，必须给子Widget明确的尺寸。</p>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // 获取示例说明
+            getExampleDescription(example) {
+                const descriptions = {
+                    basic: `
+                        <div class="info-box">
+                            <h4>基础布局流程</h4>
+                            <p>这是Flutter布局的基本流程，理解这个流程是掌握Flutter布局的关键。</p>
+                        </div>
+                    `,
+                    tight: `
+                        <div class="info-box">
+                            <h4>Tight Constraints 应用场景</h4>
+                            <ul>
+                                <li>SizedBox: 强制子Widget使用指定尺寸</li>
+                                <li>Container (带width/height): 传递严格约束</li>
+                                <li>Expanded: 在Row/Column中占据所有可用空间</li>
+                            </ul>
+                        </div>
+                    `,
+                    loose: `
+                        <div class="info-box">
+                            <h4>Loose Constraints 应用场景</h4>
+                            <ul>
+                                <li>Center: 让子Widget自由选择尺寸</li>
+                                <li>Align: 允许子Widget使用内在尺寸</li>
+                                <li>UnconstrainedBox: 移除父Widget的约束</li>
+                            </ul>
+                        </div>
+                    `,
+                    unbounded: `
+                        <div class="highlight-box">
+                            <strong>解决方案：</strong><br>
+                            1. 使用SizedBox/Container指定明确尺寸<br>
+                            2. 使用Expanded/Flexible填充可用空间<br>
+                            3. 使用IntrinsicWidth/IntrinsicHeight（性能较差）
+                        </div>
+                    `,
+                    center: `
+                        <div class="info-box">
+                            <h4>Center Widget特点</h4>
+                            <ul>
+                                <li>传递Loose Constraints给子Widget</li>
+                                <li>子Widget可以自由选择尺寸</li>
+                                <li>Center自身会填满父Widget的约束</li>
+                                <li>子Widget在Center中居中显示</li>
+                            </ul>
+                        </div>
+                    `,
+                    padding: `
+                        <div class="info-box">
+                            <h4>Padding Widget特点</h4>
+                            <ul>
+                                <li>从约束中减去padding值</li>
+                                <li>传递收缩后的约束给子Widget</li>
+                                <li>Padding的尺寸 = 子Widget尺寸 + padding</li>
+                                <li>padding会影响布局性能</li>
+                            </ul>
+                        </div>
+                    `
+                };
+
+                return descriptions[example.type] || '';
+            },
+
+            // 更新参数
+            updateParam(param, value) {
+                this.params[param] = parseInt(value);
+                this.render();
+            },
+
+            // 重置参数
+            resetParams() {
+                this.params = {
+                    parentWidth: 300,
+                    parentHeight: 200,
+                    childWidth: 150,
+                    childHeight: 100,
+                };
+                this.render();
+            }
+        };
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+</html>
+

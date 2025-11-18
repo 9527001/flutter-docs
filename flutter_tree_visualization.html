@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flutter Engine 三棵树可视化</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        /* 头部 */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        /* 示例选择器 */
+        .example-selector {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .example-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .example-tab {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .example-tab:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .example-tab.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+
+        /* 左侧：树可视化 */
+        .tree-visualization {
+            flex: 2;
+            padding: 30px;
+            background: #fafafa;
+        }
+
+        .tree-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .tree-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step-indicator {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-left: auto;
+        }
+
+        /* 树结构显示 */
+        .trees-display {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            gap: 30px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .single-tree {
+            flex: 1;
+            min-width: 250px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+            cursor: pointer;
+            opacity: 0;
+            transform: scale(0.9);
+            animation: fadeInScale 0.5s forwards;
+        }
+
+        @keyframes fadeInScale {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .single-tree:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .single-tree.widget {
+            border-color: #4caf50;
+        }
+
+        .single-tree.element {
+            border-color: #2196f3;
+        }
+
+        .single-tree.render {
+            border-color: #ff9800;
+        }
+
+        .single-tree.highlighted {
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.3);
+        }
+
+        .tree-header {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .widget .tree-header {
+            background: #4caf50;
+        }
+
+        .element .tree-header {
+            background: #2196f3;
+        }
+
+        .render .tree-header {
+            background: #ff9800;
+        }
+
+        /* 树节点 */
+        .tree-node {
+            margin: 8px 0;
+        }
+
+        .node {
+            display: inline-block;
+            padding: 8px 16px;
+            background: white;
+            border: 2px solid;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            margin: 4px 0;
+        }
+
+        .widget .node {
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+
+        .element .node {
+            border-color: #2196f3;
+            color: #1565c0;
+        }
+
+        .render .node {
+            border-color: #ff9800;
+            color: #e65100;
+        }
+
+        .tree-branch {
+            width: 2px;
+            height: 20px;
+            margin-left: 30px;
+            opacity: 0.4;
+        }
+
+        .widget .tree-branch {
+            background: #4caf50;
+        }
+
+        .element .tree-branch {
+            background: #2196f3;
+        }
+
+        .render .tree-branch {
+            background: #ff9800;
+        }
+
+        .tree-children {
+            margin-left: 20px;
+            padding-left: 15px;
+            border-left: 2px dashed rgba(0, 0, 0, 0.1);
+        }
+
+        .tree-description {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* 箭头 */
+        .arrow {
+            font-size: 36px;
+            color: #999;
+            align-self: center;
+        }
+
+        /* 右侧：控制面板 */
+        .control-panel {
+            flex: 1;
+            padding: 30px;
+            background: white;
+            border-left: 1px solid #e0e0e0;
+            overflow-y: auto;
+        }
+
+        .panel-section {
+            margin-bottom: 30px;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 2px;
+        }
+
+        /* 步骤控制 */
+        .step-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .step-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .step-btn:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .step-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .step-info {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 12px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .reset-btn:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
+        }
+
+        /* 说明框 */
+        .info-box {
+            padding: 20px;
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h4 {
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .info-box p {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #555;
+            white-space: pre-line;
+        }
+
+        /* 状态更新演示 */
+        .demo-box {
+            padding: 20px;
+            background: #fff3e0;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .counter-display {
+            font-size: 48px;
+            font-weight: bold;
+            color: #f57c00;
+            margin: 20px 0;
+        }
+
+        .demo-btn {
+            padding: 12px 30px;
+            background: #9c27b0;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .demo-btn:hover {
+            background: #7b1fa2;
+            transform: scale(1.05);
+        }
+
+        .demo-description {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* 详细说明 */
+        .detail-section {
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .detail-section h5 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+
+        .detail-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .detail-section li {
+            padding: 6px 0;
+            font-size: 13px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .detail-section li::before {
+            content: '✓ ';
+            color: #4caf50;
+            font-weight: bold;
+            margin-right: 6px;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .control-panel {
+                border-left: none;
+                border-top: 1px solid #e0e0e0;
+            }
+
+            .trees-display {
+                flex-direction: column;
+            }
+
+            .arrow {
+                transform: rotate(90deg);
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>🌳 Flutter Engine 三棵树可视化</h1>
+            <p>深入理解 Widget Tree、Element Tree 和 RenderObject Tree 的工作原理</p>
+        </div>
+
+        <!-- 示例选择器 -->
+        <div class="example-selector">
+            <div class="example-tabs" id="exampleTabs"></div>
+        </div>
+
+        <!-- 主内容 -->
+        <div class="main-content">
+            <!-- 左侧：树可视化 -->
+            <div class="tree-visualization">
+                <div class="tree-container">
+                    <div class="tree-title">
+                        三棵树结构
+                        <span class="step-indicator" id="stepIndicator">第 1 步</span>
+                    </div>
+                    <div class="trees-display" id="treesDisplay"></div>
+                </div>
+            </div>
+
+            <!-- 右侧：控制面板 -->
+            <div class="control-panel">
+                <!-- 步骤控制 -->
+                <div class="panel-section">
+                    <div class="panel-title">演示步骤</div>
+                    <div class="step-controls">
+                        <button class="step-btn" id="prevBtn" onclick="app.previousStep()">◀ 上一步</button>
+                        <span class="step-info" id="stepInfo">步骤 1 / 4</span>
+                        <button class="step-btn" id="nextBtn" onclick="app.nextStep()">下一步 ▶</button>
+                    </div>
+                    <button class="reset-btn" onclick="app.resetStep()">🔄 重新开始</button>
+                </div>
+
+                <!-- 步骤说明 -->
+                <div class="panel-section">
+                    <div class="info-box" id="stepDescription"></div>
+                </div>
+
+                <!-- 树的详细说明 -->
+                <div class="panel-section" id="treeDetails"></div>
+
+                <!-- 状态更新演示 -->
+                <div class="panel-section" id="demoSection" style="display: none;">
+                    <div class="panel-title">状态更新演示</div>
+                    <div class="demo-box">
+                        <div class="counter-display" id="counterDisplay">0</div>
+                        <button class="demo-btn" onclick="app.incrementCounter()">➕ 增加计数</button>
+                        <div class="demo-description">
+                            当状态改变时：
+                            <br>• Widget 重新创建（轻量）
+                            <br>• Element 复用（高效）
+                            <br>• RenderObject 更新（按需）
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 应用状态管理
+        const app = {
+            currentExample: 0,
+            currentStep: 0,
+            counter: 0,
+            highlightedTree: null,
+
+            // 示例数据
+            examples: [
+                {
+                    title: '基础示例',
+                    description: '简单的 Text Widget',
+                    widget: { type: 'Text', children: [], params: '"Hello Flutter"' }
+                },
+                {
+                    title: '容器示例',
+                    description: 'Container 包含子 Widget',
+                    widget: { 
+                        type: 'Container', 
+                        children: [
+                            { type: 'Text', children: [], params: '"World"' }
+                        ],
+                        params: ''
+                    }
+                },
+                {
+                    title: '列表示例',
+                    description: 'Column 包含多个子 Widget',
+                    widget: { 
+                        type: 'Column', 
+                        children: [
+                            { type: 'Text', children: [], params: '"Item 1"' },
+                            { type: 'Text', children: [], params: '"Item 2"' },
+                            { type: 'Icon', children: [], params: 'Icons.star' }
+                        ],
+                        params: ''
+                    }
+                },
+                {
+                    title: '状态更新',
+                    description: 'StatefulWidget 状态变化',
+                    widget: { type: 'Counter', children: [], params: 'count: 0' }
+                }
+            ],
+
+            // 初始化
+            init() {
+                this.renderExampleTabs();
+                this.selectExample(0);
+            },
+
+            // 渲染示例标签
+            renderExampleTabs() {
+                const container = document.getElementById('exampleTabs');
+                container.innerHTML = this.examples.map((example, index) => `
+                    <div class="example-tab ${index === 0 ? 'active' : ''}" 
+                         onclick="app.selectExample(${index})" 
+                         id="tab-${index}">
+                        <strong>${example.title}</strong>
+                        <br>
+                        <small>${example.description}</small>
+                    </div>
+                `).join('');
+            },
+
+            // 选择示例
+            selectExample(index) {
+                this.currentExample = index;
+                this.currentStep = 0;
+                this.highlightedTree = null;
+
+                // 更新标签样式
+                document.querySelectorAll('.example-tab').forEach((tab, i) => {
+                    tab.classList.toggle('active', i === index);
+                });
+
+                // 显示/隐藏演示区域
+                document.getElementById('demoSection').style.display = 
+                    index === 3 ? 'block' : 'none';
+
+                this.render();
+            },
+
+            // 下一步
+            nextStep() {
+                if (this.currentStep < 3) {
+                    this.currentStep++;
+                    this.render();
+                }
+            },
+
+            // 上一步
+            previousStep() {
+                if (this.currentStep > 0) {
+                    this.currentStep--;
+                    this.render();
+                }
+            },
+
+            // 重置步骤
+            resetStep() {
+                this.currentStep = 0;
+                this.highlightedTree = null;
+                this.render();
+            },
+
+            // 增加计数器
+            incrementCounter() {
+                this.counter++;
+                document.getElementById('counterDisplay').textContent = this.counter;
+                this.render();
+            },
+
+            // 高亮树
+            highlightTree(treeType) {
+                this.highlightedTree = treeType;
+                this.render();
+            },
+
+            // 渲染
+            render() {
+                this.renderTrees();
+                this.renderStepInfo();
+                this.renderStepDescription();
+                this.renderTreeDetails();
+                this.updateButtons();
+            },
+
+            // 渲染树结构
+            renderTrees() {
+                const container = document.getElementById('treesDisplay');
+                const example = this.examples[this.currentExample];
+                let html = '';
+
+                // Widget Tree
+                if (this.currentStep >= 0) {
+                    html += this.renderSingleTree('widget', 'Widget Tree', example.widget, '#4caf50');
+                }
+
+                // 箭头
+                if (this.currentStep >= 1) {
+                    html += '<div class="arrow">→</div>';
+                }
+
+                // Element Tree
+                if (this.currentStep >= 1) {
+                    html += this.renderSingleTree('element', 'Element Tree', example.widget, '#2196f3');
+                }
+
+                // 箭头
+                if (this.currentStep >= 2) {
+                    html += '<div class="arrow">→</div>';
+                }
+
+                // RenderObject Tree
+                if (this.currentStep >= 2) {
+                    html += this.renderSingleTree('render', 'RenderObject Tree', example.widget, '#ff9800');
+                }
+
+                container.innerHTML = html;
+            },
+
+            // 渲染单棵树
+            renderSingleTree(type, title, widget, color) {
+                const highlighted = this.highlightedTree === type ? 'highlighted' : '';
+                const description = this.getTreeShortDescription(type);
+                
+                return `
+                    <div class="single-tree ${type} ${highlighted}" 
+                         onclick="app.highlightTree('${type}')"
+                         style="animation-delay: ${type === 'element' ? '0.2s' : type === 'render' ? '0.4s' : '0s'}">
+                        <div class="tree-header">${title}</div>
+                        ${this.renderTreeNodes(type, widget)}
+                        <div class="tree-description">${description}</div>
+                    </div>
+                `;
+            },
+
+            // 渲染树节点
+            renderTreeNodes(type, widget) {
+                const nodeName = type === 'element' ? 
+                    `${widget.type}Element` : 
+                    type === 'render' ? 
+                    `Render${widget.type}` : 
+                    widget.type;
+
+                const params = this.currentExample === 3 ? 
+                    `count: ${this.counter}` : 
+                    widget.params;
+
+                let html = `
+                    <div class="tree-node">
+                        <div class="node">${nodeName}${params ? `(${params})` : ''}</div>
+                    </div>
+                `;
+
+                if (widget.children && widget.children.length > 0) {
+                    html += '<div class="tree-branch"></div>';
+                    html += '<div class="tree-children">';
+                    widget.children.forEach(child => {
+                        const childNodeName = type === 'element' ? 
+                            `${child.type}Element` : 
+                            type === 'render' ? 
+                            `Render${child.type}` : 
+                            child.type;
+                        
+                        html += `
+                            <div class="tree-node">
+                                <div class="node">${childNodeName}${child.params ? `(${child.params})` : ''}</div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+
+                return html;
+            },
+
+            // 获取树的简短描述
+            getTreeShortDescription(type) {
+                const descriptions = {
+                    widget: '配置信息<br>轻量、不可变',
+                    element: '生命周期管理<br>中介、可复用',
+                    render: '布局和绘制<br>重量、性能关键'
+                };
+                return descriptions[type] || '';
+            },
+
+            // 渲染步骤信息
+            renderStepInfo() {
+                document.getElementById('stepIndicator').textContent = `第 ${this.currentStep + 1} 步`;
+                document.getElementById('stepInfo').textContent = `步骤 ${this.currentStep + 1} / 4`;
+            },
+
+            // 渲染步骤描述
+            renderStepDescription() {
+                const descriptions = [
+                    {
+                        title: '第1步: 创建 Widget Tree',
+                        content: 'Flutter 首先根据你的代码创建 Widget 树。\nWidget 只是配置信息，非常轻量，可以频繁创建和销毁。'
+                    },
+                    {
+                        title: '第2步: 创建 Element Tree',
+                        content: 'Framework 为每个 Widget 创建对应的 Element。\nElement 持有 Widget 引用，管理其生命周期，是 Widget 和 RenderObject 之间的桥梁。'
+                    },
+                    {
+                        title: '第3步: 创建 RenderObject Tree',
+                        content: '只有需要渲染的 Widget 才创建 RenderObject。\nRenderObject 负责实际的布局、绘制和命中测试工作。'
+                    },
+                    {
+                        title: '第4步: 渲染到屏幕',
+                        content: 'RenderObject 执行布局计算、绘制操作，最终渲染到屏幕。\n三棵树协同工作，实现高效的 UI 更新机制。'
+                    }
+                ];
+
+                const desc = descriptions[this.currentStep];
+                document.getElementById('stepDescription').innerHTML = `
+                    <h4>${desc.title}</h4>
+                    <p>${desc.content}</p>
+                `;
+            },
+
+            // 渲染树详细说明
+            renderTreeDetails() {
+                const container = document.getElementById('treeDetails');
+                
+                if (!this.highlightedTree) {
+                    container.innerHTML = `
+                        <div class="panel-title">树的详细说明</div>
+                        <p style="color: #999; font-size: 14px;">点击上方的树节点查看详细说明</p>
+                    `;
+                    return;
+                }
+
+                const details = {
+                    widget: {
+                        title: 'Widget Tree（配置树）',
+                        color: '#e8f5e9',
+                        points: [
+                            'Widget 是不可变的（immutable）配置信息',
+                            '描述 UI 应该是什么样子的',
+                            '每次 rebuild 都会重新创建',
+                            '创建成本极低，可以频繁创建',
+                            '就像建筑图纸，描述了房子应该怎么建'
+                        ]
+                    },
+                    element: {
+                        title: 'Element Tree（生命周期树）',
+                        color: '#e3f2fd',
+                        points: [
+                            'Element 是 Widget 的实例化',
+                            '持有 Widget 和 RenderObject 的引用',
+                            '管理 Widget 的生命周期',
+                            '负责 Widget 树的 diff 算法',
+                            '就像施工队长，协调图纸和实际施工'
+                        ]
+                    },
+                    render: {
+                        title: 'RenderObject Tree（渲染树）',
+                        color: '#fff3e0',
+                        points: [
+                            'RenderObject 负责实际的布局和绘制',
+                            '只有需要渲染的 Widget 才有对应的 RenderObject',
+                            '处理布局约束（constraints）',
+                            '执行绘制操作（paint）',
+                            '就像实际的施工过程，真正建造房子'
+                        ]
+                    }
+                };
+
+                const detail = details[this.highlightedTree];
+                container.innerHTML = `
+                    <div class="panel-title">树的详细说明</div>
+                    <div class="detail-section" style="background: ${detail.color}">
+                        <h5>${detail.title}</h5>
+                        <ul>
+                            ${detail.points.map(point => `<li>${point}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            },
+
+            // 更新按钮状态
+            updateButtons() {
+                document.getElementById('prevBtn').disabled = this.currentStep === 0;
+                document.getElementById('nextBtn').disabled = this.currentStep === 3;
+            }
+        };
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+</html>
+
