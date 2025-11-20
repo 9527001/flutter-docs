@@ -212,6 +212,14 @@
             background: rgba(52, 152, 219, 0.05);
         }
 
+        .overflow-indicator {
+            position: absolute;
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 12px;
+            pointer-events: none;
+        }
+
         .box-label {
             position: absolute;
             top: -12px;
@@ -439,8 +447,97 @@ Container (尺寸: 填满父约束 300×300)
 
             <!-- 可视化对比 -->
             <div class="section">
-                <div class="section-title">👁️ 可视化对比</div>
+                <div class="section-title">👁️ 可视化对比（child 尺寸：200×50）</div>
 
+                <h4 style="margin: 20px 0 15px 0; color: #333;">场景 1：正常情况（无冲突）</h4>
+                <div class="visual-demo">
+                    <div class="demo-case">
+                        <div class="demo-title">✅ Container 300×100，child 200×50</div>
+                        <div class="visual-box parent" style="width: 300px; height: 100px; margin: 0 auto;">
+                            <span class="box-label">Container (300×100)</span>
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                                <div class="visual-box child" style="width: 200px; height: 50px;">
+                                    <span class="box-label">child (200×50)</span>
+                                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 11px; color: white;">
+                                        正常居中
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="box-size" style="text-align: center; margin-top: 10px;">✅ 空间充足，alignment 正常工作</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 style="margin: 30px 0 15px 0; color: #333;">场景 2：宽度冲突</h4>
+                <div class="visual-demo">
+                    <div class="demo-case">
+                        <div class="demo-title">❌ Container 150×100，child 200×50</div>
+                        <div class="visual-box parent" style="width: 150px; height: 100px; margin: 0 auto; position: relative; overflow: visible;">
+                            <span class="box-label">Container (150×100)</span>
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; position: relative;">
+                                <div class="visual-box child" style="width: 200px; height: 50px; position: relative; border-color: #e74c3c; background: rgba(231, 76, 60, 0.3);">
+                                    <span class="box-label" style="background: #e74c3c; color: white;">child (200×50) 溢出！</span>
+                                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 11px; color: white;">
+                                        宽度溢出
+                                    </div>
+                                    <div style="position: absolute; right: -50px; top: 50%; transform: translateY(-50%); color: #e74c3c; font-weight: bold; font-size: 12px;">
+                                        ← 溢出 50px
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="box-size" style="text-align: center; margin-top: 10px; color: #e74c3c;">❌ Container 宽度不足，child 溢出</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 style="margin: 30px 0 15px 0; color: #333;">场景 3：高度冲突</h4>
+                <div class="visual-demo">
+                    <div class="demo-case">
+                        <div class="demo-title">❌ Container 300×30，child 200×50</div>
+                        <div class="visual-box parent" style="width: 300px; height: 30px; margin: 0 auto; position: relative; overflow: visible;">
+                            <span class="box-label">Container (300×30)</span>
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; position: relative;">
+                                <div class="visual-box child" style="width: 200px; height: 50px; position: relative; border-color: #e74c3c; background: rgba(231, 76, 60, 0.3);">
+                                    <span class="box-label" style="background: #e74c3c; color: white;">child (200×50) 溢出！</span>
+                                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 11px; color: white;">
+                                        高度溢出
+                                    </div>
+                                    <div style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); color: #e74c3c; font-weight: bold; font-size: 12px; white-space: nowrap;">
+                                        溢出 20px ↑
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="box-size" style="text-align: center; margin-top: 10px; color: #e74c3c;">❌ Container 高度不足，child 溢出</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 style="margin: 30px 0 15px 0; color: #333;">场景 4：双重冲突（宽度和高度都冲突）</h4>
+                <div class="visual-demo">
+                    <div class="demo-case">
+                        <div class="demo-title">❌ Container 150×30，child 200×50</div>
+                        <div class="visual-box parent" style="width: 150px; height: 30px; margin: 0 auto; position: relative; overflow: visible;">
+                            <span class="box-label">Container (150×30)</span>
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; position: relative;">
+                                <div class="visual-box child" style="width: 200px; height: 50px; position: relative; border-color: #e74c3c; background: rgba(231, 76, 60, 0.3);">
+                                    <span class="box-label" style="background: #e74c3c; color: white;">child (200×50) 严重溢出！</span>
+                                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 11px; color: white;">
+                                        双重溢出
+                                    </div>
+                                    <div style="position: absolute; right: -50px; top: 50%; transform: translateY(-50%); color: #e74c3c; font-weight: bold; font-size: 12px;">
+                                        ← 宽度溢出 50px
+                                    </div>
+                                    <div style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); color: #e74c3c; font-weight: bold; font-size: 12px; white-space: nowrap;">
+                                        高度溢出 20px ↑
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="box-size" style="text-align: center; margin-top: 10px; color: #e74c3c;">❌ Container 尺寸不足，child 在宽度和高度方向都溢出</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 style="margin: 30px 0 15px 0; color: #333;">场景 5：alignment + constraints 冲突（原问题）</h4>
                 <div class="visual-demo">
                     <div class="demo-case">
                         <div class="demo-title">❌ 错误理解（期望）</div>

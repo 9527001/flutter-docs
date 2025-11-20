@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown 文档预览</title>
+    <!-- Marked.js - Markdown 解析器 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <!-- Highlight.js - 代码高亮 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+    <script>
+        // 确保 highlight.js 加载完成
+        if (typeof hljs === 'undefined') {
+            console.warn('highlight.js 未加载，尝试备用 CDN...');
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js';
+            script.onload = function() {
+                console.log('highlight.js 从备用 CDN 加载成功');
+            };
+            document.head.appendChild(script);
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .markdown-content {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Markdown 样式 */
+        .markdown-content h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 30px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+            color: #2c3e50;
+        }
+
+        .markdown-content h2 {
+            font-size: 28px;
+            font-weight: 600;
+            margin: 25px 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e9ecef;
+            color: #34495e;
+        }
+
+        .markdown-content h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 20px 0 12px;
+            color: #34495e;
+        }
+
+        .markdown-content h4 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 18px 0 10px;
+            color: #34495e;
+        }
+
+        .markdown-content h5 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 15px 0 8px;
+            color: #34495e;
+        }
+
+        .markdown-content h6 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 12px 0 6px;
+            color: #34495e;
+        }
+
+        .markdown-content p {
+            margin: 12px 0;
+            line-height: 1.8;
+        }
+
+        .markdown-content ul,
+        .markdown-content ol {
+            margin: 12px 0;
+            padding-left: 30px;
+        }
+
+        .markdown-content li {
+            margin: 8px 0;
+            line-height: 1.8;
+        }
+
+        .markdown-content blockquote {
+            margin: 16px 0;
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            color: #666;
+            font-style: italic;
+        }
+
+        .markdown-content code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #e83e8c;
+        }
+
+        .markdown-content pre {
+            margin: 20px 0;
+            padding: 16px;
+            background: #282c34;
+            border-radius: 6px;
+            overflow-x: auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .markdown-content pre code {
+            background: transparent;
+            padding: 0;
+            color: #abb2bf;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .markdown-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .markdown-content table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .markdown-content table td {
+            padding: 12px;
+            border: 1px solid #e9ecef;
+        }
+
+        .markdown-content table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .markdown-content table tr:hover {
+            background: #f0f4ff;
+        }
+
+        .markdown-content a {
+            color: #667eea;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .markdown-content a:hover {
+            color: #764ba2;
+            border-bottom-color: #764ba2;
+        }
+
+        .markdown-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .markdown-content hr {
+            margin: 30px 0;
+            border: none;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .markdown-content strong {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .markdown-content em {
+            font-style: italic;
+            color: #666;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #c33;
+        }
+
+        .file-info {
+            background: #f8f9fa;
+            padding: 12px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-info::before {
+            content: "📄";
+            font-size: 16px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 10px;
+            }
+
+            .markdown-content {
+                padding: 20px;
+            }
+
+            .markdown-content h1 {
+                font-size: 28px;
+            }
+
+            .markdown-content h2 {
+                font-size: 24px;
+            }
+
+            .markdown-content h3 {
+                font-size: 20px;
+            }
+        }
+
+        /* 目录样式 */
+        .toc {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .toc h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            margin: 8px 0;
+        }
+
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>📄 Markdown 文档预览</h1>
+            <a href="index.html" class="back-btn">← 返回首页</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="fileInfo" class="file-info" style="display: none;"></div>
+        <div id="loading" class="loading">正在加载文档...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        <div id="markdownContent" class="markdown-content" style="display: none;"></div>
+    </div>
+
+    <script>
+        // 配置 marked.js
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            headerIds: true,
+            mangle: false,
+        });
+
+        // 获取 URL 参数
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // 获取文件路径
+        const filePath = getUrlParameter('file') || window.location.hash.substring(1);
+
+        if (!filePath) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = '错误：未指定文件路径。请使用 ?file=文件名.md 或 #文件名.md';
+        } else {
+            // 显示文件信息
+            const fileInfo = document.getElementById('fileInfo');
+            fileInfo.textContent = `文件: ${filePath}`;
+            fileInfo.style.display = 'flex';
+
+            // 加载 Markdown 文件
+            fetch(filePath)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.text();
+                })
+                .then(markdown => {
+                    // 隐藏加载提示
+                    document.getElementById('loading').style.display = 'none';
+
+                    // 解析 Markdown
+                    const html = marked.parse(markdown);
+
+                    // 显示内容
+                    const contentDiv = document.getElementById('markdownContent');
+                    contentDiv.innerHTML = html;
+
+                    // 高亮代码（检查 hljs 是否可用）
+                    if (typeof hljs !== 'undefined') {
+                        contentDiv.querySelectorAll('pre code').forEach((block) => {
+                            try {
+                                hljs.highlightElement(block);
+                            } catch (e) {
+                                console.warn('代码高亮失败:', e);
+                            }
+                        });
+                    } else {
+                        console.warn('highlight.js 未加载，跳过代码高亮');
+                    }
+
+                    // 显示内容
+                    contentDiv.style.display = 'block';
+
+                    // 更新标题
+                    const firstH1 = contentDiv.querySelector('h1');
+                    if (firstH1) {
+                        document.title = firstH1.textContent + ' - Markdown 预览';
+                    }
+
+                    // 处理内部链接（相对路径）
+                    contentDiv.querySelectorAll('a').forEach(link => {
+                        const href = link.getAttribute('href');
+                        if (href && !href.startsWith('http') && !href.startsWith('#')) {
+                            // 如果是 .md 文件，转换为预览链接
+                            if (href.endsWith('.md')) {
+                                link.href = `markdown_viewer.html?file=${href}`;
+                                link.target = '_self';
+                            }
+                        }
+                    });
+                })
+                .catch(error => {
+                    document.getElementById('loading').style.display = 'none';
+                    const errorDiv = document.getElementById('error');
+                    errorDiv.style.display = 'block';
+                    
+                    // 检查是否是 CORS 错误
+                    const isCorsError = error.message.includes('Failed to fetch') || 
+                                       error.message.includes('CORS') ||
+                                       window.location.protocol === 'file:';
+                    
+                    if (isCorsError) {
+                        errorDiv.innerHTML = `
+                            <h3>⚠️ CORS 错误：无法直接加载文件</h3>
+                            <p><strong>原因：</strong>浏览器安全策略阻止了直接文件访问。</p>
+                            <p><strong>解决方案：</strong></p>
+                            <ol style="margin-left: 20px; margin-top: 10px;">
+                                <li style="margin: 8px 0;">
+                                    <strong>使用本地服务器（推荐）：</strong><br>
+                                    <code style="background: #f4f4f4; padding: 4px 8px; border-radius: 3px; display: inline-block; margin-top: 4px;">
+                                        cd doc && python3 -m http.server 8000
+                                    </code><br>
+                                    然后访问: <code style="background: #f4f4f4; padding: 4px 8px; border-radius: 3px; display: inline-block; margin-top: 4px;">http://localhost:8000/markdown_viewer.html?file=${filePath}</code>
+                                </li>
+                                <li style="margin: 8px 0;">
+                                    <strong>或使用 Node.js：</strong><br>
+                                    <code style="background: #f4f4f4; padding: 4px 8px; border-radius: 3px; display: inline-block; margin-top: 4px;">
+                                        npx http-server doc -p 8000
+                                    </code>
+                                </li>
+                                <li style="margin: 8px 0;">
+                                    <strong>或使用项目提供的脚本：</strong><br>
+                                    <code style="background: #f4f4f4; padding: 4px 8px; border-radius: 3px; display: inline-block; margin-top: 4px;">
+                                        ./start_server.sh
+                                    </code>
+                                </li>
+                            </ol>
+                            <p style="margin-top: 15px;"><strong>错误详情：</strong> ${error.message}</p>
+                        `;
+                    } else {
+                        errorDiv.innerHTML = `
+                            <h3>❌ 无法加载文件</h3>
+                            <p><strong>文件路径：</strong> ${filePath}</p>
+                            <p><strong>错误信息：</strong> ${error.message}</p>
+                            <p style="margin-top: 15px;">请检查：</p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>文件是否存在</li>
+                                <li>文件路径是否正确</li>
+                                <li>是否使用了本地服务器</li>
+                            </ul>
+                        `;
+                    }
+                });
+        }
+
+        // 支持直接通过 hash 加载文件
+        window.addEventListener('hashchange', () => {
+            const newFilePath = window.location.hash.substring(1);
+            if (newFilePath) {
+                window.location.reload();
+            }
+        });
+    </script>
+</body>
+</html>
+

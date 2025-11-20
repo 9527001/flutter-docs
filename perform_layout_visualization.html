@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flutter performLayout 实现方式可视化</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header .back-btn {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            color: #333;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin: 20px 0;
+        }
+
+        .pattern-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .pattern-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+
+        .pattern-card.active {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .pattern-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .pattern-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .pattern-percentage {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .pattern-stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .complexity {
+            display: flex;
+            gap: 3px;
+        }
+
+        .star {
+            color: #ffc107;
+            font-size: 16px;
+        }
+
+        .star.empty {
+            color: #ddd;
+        }
+
+        .code-preview {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            margin: 15px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .keyword {
+            color: #66d9ef;
+        }
+
+        .string {
+            color: #e6db74;
+        }
+
+        .number {
+            color: #ae81ff;
+        }
+
+        .comment {
+            color: #75715e;
+        }
+
+        .type {
+            color: #a6e22e;
+        }
+
+        .visual-diagram {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .widget-tree {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .tree-node {
+            margin: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .tree-node::before {
+            content: '├── ';
+            position: absolute;
+            left: 0;
+            color: #999;
+        }
+
+        .tree-node:last-child::before {
+            content: '└── ';
+        }
+
+        .constraint-flow {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .flow-arrow {
+            font-size: 24px;
+            color: #667eea;
+        }
+
+        .flow-box {
+            flex: 1;
+            padding: 15px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .flow-box-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .flow-box-content {
+            font-size: 13px;
+            color: #666;
+            font-family: 'Courier New', monospace;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+
+        .comparison-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .comparison-table td {
+            padding: 12px;
+            border: 1px solid #e9ecef;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 15px;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .pattern-detail {
+            display: none;
+        }
+
+        .pattern-detail.active {
+            display: block;
+        }
+
+        .back-to-list {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .pattern-example {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .pattern-example-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header" style="position: relative;">
+            <a href="index.html" class="back-btn">← 返回</a>
+            <h1>🎨 Flutter performLayout 实现方式可视化</h1>
+            <p>深入理解不同 Widget 的布局实现模式</p>
+        </div>
+
+        <div class="content">
+            <!-- 模式概览 -->
+            <div class="section">
+                <div class="section-title">📊 7 种 performLayout 实现模式</div>
+                
+                <div class="pattern-grid" id="patternGrid">
+                    <!-- 模式卡片将通过 JavaScript 动态生成 -->
+                </div>
+            </div>
+
+            <!-- 统计图表 -->
+            <div class="section">
+                <div class="section-title">📈 模式分布统计</div>
+                
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>模式</th>
+                            <th>代表类数量</th>
+                            <th>占比</th>
+                            <th>复杂度</th>
+                            <th>使用频率</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>代理模式</strong></td>
+                            <td>~15</td>
+                            <td>15%</td>
+                            <td>⭐⭐</td>
+                            <td>高</td>
+                        </tr>
+                        <tr>
+                            <td><strong>约束修改模式</strong></td>
+                            <td>~20</td>
+                            <td>20%</td>
+                            <td>⭐⭐</td>
+                            <td>高</td>
+                        </tr>
+                        <tr>
+                            <td><strong>对齐模式</strong></td>
+                            <td>~10</td>
+                            <td>10%</td>
+                            <td>⭐⭐</td>
+                            <td>中</td>
+                        </tr>
+                        <tr>
+                            <td><strong>弹性布局模式</strong></td>
+                            <td>~15</td>
+                            <td>15%</td>
+                            <td>⭐⭐⭐⭐</td>
+                            <td>高</td>
+                        </tr>
+                        <tr>
+                            <td><strong>堆叠布局模式</strong></td>
+                            <td>~5</td>
+                            <td>5%</td>
+                            <td>⭐⭐⭐</td>
+                            <td>中</td>
+                        </tr>
+                        <tr>
+                            <td><strong>自定义布局模式</strong></td>
+                            <td>~10</td>
+                            <td>10%</td>
+                            <td>⭐⭐⭐⭐⭐</td>
+                            <td>低</td>
+                        </tr>
+                        <tr>
+                            <td><strong>叶子节点模式</strong></td>
+                            <td>~25</td>
+                            <td>25%</td>
+                            <td>⭐⭐⭐</td>
+                            <td>高</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 模式详情 -->
+            <div class="section" id="patternDetails">
+                <!-- 详情内容将通过 JavaScript 动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const patterns = [
+            {
+                id: 'proxy',
+                name: '代理模式',
+                percentage: '15%',
+                complexity: 2,
+                frequency: '高',
+                classes: ['RenderProxyBox', 'RenderProxyBoxWithHitTestBehavior'],
+                description: '完全代理子元素的尺寸和行为，不额外占用空间',
+                code: `@override
+void performLayout() {
+  size = (child?..layout(constraints, parentUsesSize: true))?.size
+      ?? computeSizeForNoChild(constraints);
+}`,
+                flow: [
+                    { title: '接收约束', content: 'BoxConstraints constraints' },
+                    { title: '布局子元素', content: 'child.layout(constraints)' },
+                    { title: '继承尺寸', content: 'size = child.size' }
+                ],
+                useCases: ['装饰性 Widget', 'Opacity', 'Transform', '不需要改变布局的包装 Widget']
+            },
+            {
+                id: 'constraint',
+                name: '约束修改模式',
+                percentage: '20%',
+                complexity: 2,
+                frequency: '高',
+                classes: ['RenderConstrainedBox', 'RenderSizedBox', 'RenderAspectRatio'],
+                description: '修改传递给子元素的约束，但尺寸仍基于子元素',
+                code: `@override
+void performLayout() {
+  if (child != null) {
+    // 合并约束
+    child!.layout(
+      _additionalConstraints.enforce(constraints),
+      parentUsesSize: true,
+    );
+    // 尺寸继承
+    size = child!.size;
+  }
+}`,
+                flow: [
+                    { title: '接收约束', content: 'BoxConstraints constraints' },
+                    { title: '合并约束', content: 'enforce(constraints)' },
+                    { title: '布局子元素', content: 'child.layout(mergedConstraints)' },
+                    { title: '继承尺寸', content: 'size = child.size' }
+                ],
+                useCases: ['ConstrainedBox', 'SizedBox', 'AspectRatio', '限制/扩展子元素尺寸']
+            },
+            {
+                id: 'alignment',
+                name: '对齐模式',
+                percentage: '10%',
+                complexity: 2,
+                frequency: '中',
+                classes: ['RenderPositionedBox', 'RenderCenter', 'RenderPadding'],
+                description: '在可用空间内对齐子元素，自身尺寸可能填满父约束',
+                code: `@override
+void performLayout() {
+  if (child != null) {
+    // 传递 Loose Constraints
+    child!.layout(constraints.loosen(), parentUsesSize: true);
+    
+    // 确定自身尺寸（可能填满）
+    size = constraints.constrain(Size(
+      shrinkWrap ? child!.size.width : double.infinity,
+      shrinkWrap ? child!.size.height : double.infinity,
+    ));
+    
+    // 对齐子元素
+    alignChild();
+  }
+}`,
+                flow: [
+                    { title: '接收约束', content: 'BoxConstraints constraints' },
+                    { title: '放松约束', content: 'constraints.loosen()' },
+                    { title: '布局子元素', content: 'child.layout(looseConstraints)' },
+                    { title: '确定尺寸', content: 'size = constrain(infinity)' },
+                    { title: '对齐子元素', content: 'alignChild()' }
+                ],
+                useCases: ['Center', 'Align', 'Padding', '位置调整']
+            },
+            {
+                id: 'flex',
+                name: '弹性布局模式',
+                percentage: '15%',
+                complexity: 4,
+                frequency: '高',
+                classes: ['RenderFlex', 'RenderWrap'],
+                description: '在主轴和交叉轴上分配空间，支持 flex 因子',
+                code: `@override
+void performLayout() {
+  // 1. 计算尺寸分配
+  final sizes = _computeSizes(constraints);
+  
+  // 2. 布局每个子元素
+  RenderBox? child = firstChild;
+  while (child != null) {
+    final childConstraints = computeChildConstraints(child, sizes);
+    child.layout(childConstraints, parentUsesSize: false);
+    setChildOffset(child, ...);
+    child = nextSibling;
+  }
+  
+  // 3. 确定自身尺寸
+  size = constraints.constrain(Size(mainSize, crossSize));
+}`,
+                flow: [
+                    { title: '接收约束', content: 'BoxConstraints constraints' },
+                    { title: '计算分配', content: '_computeSizes()' },
+                    { title: '遍历子元素', content: 'for each child' },
+                    { title: '布局子元素', content: 'child.layout()' },
+                    { title: '设置位置', content: 'setChildOffset()' },
+                    { title: '确定尺寸', content: 'size = constrain()' }
+                ],
+                useCases: ['Row', 'Column', 'Wrap', '弹性空间分配']
+            },
+            {
+                id: 'stack',
+                name: '堆叠布局模式',
+                percentage: '5%',
+                complexity: 3,
+                frequency: '中',
+                classes: ['RenderStack'],
+                description: '子元素可以重叠，支持绝对定位和相对定位',
+                code: `@override
+void performLayout() {
+  // 1. 计算自身尺寸
+  size = _computeSize(constraints);
+  
+  // 2. 布局每个子元素
+  RenderBox? child = firstChild;
+  while (child != null) {
+    if (!childParentData.isPositioned) {
+      // 未定位：使用对齐
+      childParentData.offset = alignment.alongOffset(size - child.size);
+    } else {
+      // 已定位：使用绝对/相对定位
+      layoutPositionedChild(child, ...);
+    }
+    child = nextSibling;
+  }
+}`,
+                flow: [
+                    { title: '接收约束', content: 'BoxConstraints constraints' },
+                    { title: '计算尺寸', content: '_computeSize()' },
+                    { title: '遍历子元素', content: 'for each child' },
+                    { title: '判断定位', content: 'isPositioned?' },
+                    { title: '布局子元素', content: 'layout()' },
+                    { title: '设置位置', content: 'setOffset()' }
+                ],
+                useCases: ['Stack', '绝对定位', '重叠布局', '层叠效果']
+            },
+            {
+                id: 'custom',
+                name: '自定义布局模式',
+                percentage: '10%',
+                complexity: 5,
+                frequency: '低',
+                classes: ['RenderCustomLayout', 'RenderFlow', 'RenderTable'],
+                description: '完全自定义布局逻辑，不遵循标准模式',
+                code: `@override
+void performLayout() {
+  // 1. 获取布局委托
+  final constraints = this.constraints;
+  
+  // 2. 使用委托计算布局
+  final childConstraints = delegate.getConstraintsForChild(constraints);
+  
+  // 3. 布局所有子元素
+  for (final child in children) {
+    child.layout(childConstraints[child]!, parentUsesSize: true);
+    childOffsets[child] = delegate.getPositionForChild(...);
+  }
+  
+  // 4. 确定自身尺寸
+  size = delegate.getSize(constraints);
+}`,
+                flow: [
+                    { title: '接收约束', content: 'BoxConstraints constraints' },
+                    { title: '获取委托', content: 'LayoutDelegate' },
+                    { title: '计算约束', content: 'getConstraintsForChild()' },
+                    { title: '布局子元素', content: 'child.layout()' },
+                    { title: '计算位置', content: 'getPositionForChild()' },
+                    { title: '确定尺寸', content: 'delegate.getSize()' }
+                ],
+                useCases: ['CustomMultiChildLayout', 'Flow', 'Table', '自定义布局算法']
+            },
+            {
+                id: 'leaf',
+                name: '叶子节点模式',
+                percentage: '25%',
+                complexity: 3,
+                frequency: '高',
+                classes: ['RenderImage', 'RenderParagraph', 'RenderEditable'],
+                description: '没有子元素，直接根据约束确定尺寸',
+                code: `@override
+void performLayout() {
+  final constraints = this.constraints;
+  
+  // 根据内容和约束计算尺寸
+  final textPainter = _textPainter;
+  textPainter.layout(
+    maxWidth: constraints.maxWidth,
+    minWidth: constraints.minWidth,
+  );
+  
+  // 确定自身尺寸
+  size = constraints.constrain(textPainter.size);
+}`,
+                flow: [
+                    { title: '接收约束', content: 'BoxConstraints constraints' },
+                    { title: '计算内容', content: 'computeContentSize()' },
+                    { title: '确定尺寸', content: 'size = constrain(contentSize)' }
+                ],
+                useCases: ['Text', 'Image', 'CustomPaint', 'TextField', '内容渲染']
+            }
+        ];
+
+        // 渲染模式卡片
+        function renderPatternCards() {
+            const grid = document.getElementById('patternGrid');
+            grid.innerHTML = patterns.map(pattern => `
+                <div class="pattern-card" onclick="showPatternDetail('${pattern.id}')">
+                    <div class="pattern-header">
+                        <div class="pattern-name">${pattern.name}</div>
+                        <div class="pattern-percentage">${pattern.percentage}</div>
+                    </div>
+                    <div class="pattern-stats">
+                        <div class="stat-item">
+                            <span>复杂度:</span>
+                            <div class="complexity">
+                                ${Array(5).fill(0).map((_, i) => 
+                                    `<span class="star ${i < pattern.complexity ? '' : 'empty'}">★</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        <div class="stat-item">使用频率: ${pattern.frequency}</div>
+                    </div>
+                    <div style="color: #666; font-size: 14px; margin-top: 10px;">
+                        ${pattern.description}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 显示模式详情
+        function showPatternDetail(patternId) {
+            const pattern = patterns.find(p => p.id === patternId);
+            if (!pattern) return;
+
+            const details = document.getElementById('patternDetails');
+            details.innerHTML = `
+                <a href="#" class="back-to-list" onclick="showPatternList(); return false;">← 返回列表</a>
+                <div class="section-title">${pattern.name} 详细分析</div>
+                
+                <div class="info-box">
+                    <strong>描述：</strong>${pattern.description}<br>
+                    <strong>代表类：</strong>${pattern.classes.join(', ')}<br>
+                    <strong>占比：</strong>${pattern.percentage} | 
+                    <strong>复杂度：</strong>${'★'.repeat(pattern.complexity)}${'☆'.repeat(5 - pattern.complexity)} | 
+                    <strong>使用频率：</strong>${pattern.frequency}
+                </div>
+
+                <div class="pattern-example">
+                    <div class="pattern-example-title">核心实现代码：</div>
+                    <div class="code-preview">${formatCode(pattern.code)}</div>
+                </div>
+
+                <div class="pattern-example">
+                    <div class="pattern-example-title">布局流程：</div>
+                    <div class="constraint-flow">
+                        ${pattern.flow.map((step, index) => `
+                            ${index > 0 ? '<div class="flow-arrow">→</div>' : ''}
+                            <div class="flow-box">
+                                <div class="flow-box-title">${step.title}</div>
+                                <div class="flow-box-content">${step.content}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="pattern-example">
+                    <div class="pattern-example-title">使用场景：</div>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        ${pattern.useCases.map(uc => `<li>${uc}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+
+            // 滚动到详情
+            details.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 显示模式列表
+        function showPatternList() {
+            const details = document.getElementById('patternDetails');
+            details.innerHTML = '';
+            document.getElementById('patternGrid').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 格式化代码
+        function formatCode(code) {
+            return code
+                .replace(/(@override|void|final|if|else|return|for|while|const)/g, '<span class="keyword">$1</span>')
+                .replace(/(BoxConstraints|Size|RenderBox|Offset)/g, '<span class="type">$1</span>')
+                .replace(/(\d+)/g, '<span class="number">$1</span>')
+                .replace(/(\/\/.*)/g, '<span class="comment">$1</span>')
+                .replace(/(['"].*?['"])/g, '<span class="string">$1</span>');
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPatternCards();
+        });
+    </script>
+</body>
+</html>
+
