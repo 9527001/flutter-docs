@@ -86,6 +86,14 @@ doc/
 
 ## 📚 文档导航
 
+### 🎯 学习研究（推荐）
+- [FLUTTER_FRAMEWORK_STUDY.md](FLUTTER_FRAMEWORK_STUDY.md) - **Flutter Framework 完整学习研究指南** ⭐
+  - 系统化的学习路径（8周计划）
+  - 核心知识体系
+  - 实践项目建议
+  - 进阶研究方向
+  - 学习检查清单
+
 ### 快速上手
 - [QUICKSTART.md](QUICKSTART.md) - 5分钟快速上手
 - [USAGE_DEMO.txt](USAGE_DEMO.txt) - 使用演示和示例
@@ -93,6 +101,8 @@ doc/
 ### 深入学习
 - [README_FLUTTER_TREE.md](README_FLUTTER_TREE.md) - 三棵树详细技术文档
 - [README_LAYOUT.md](README_LAYOUT.md) - Layout布局设计思路详解
+- [SOURCE_CODE_SUMMARY.md](SOURCE_CODE_SUMMARY.md) - 源码分析总结
+- [CONTAINER_ISSUE_SUMMARY.md](CONTAINER_ISSUE_SUMMARY.md) - Container 问题分析
 
 ### 项目信息
 - [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) - 完整的项目总结

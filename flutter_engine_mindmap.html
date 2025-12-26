@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flutter Engine 模块流程图 - 思维导图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .mindmap-container {
+            padding: 40px;
+            background: #f8f9fa;
+            min-height: 800px;
+            position: relative;
+            overflow: auto;
+        }
+
+        .mindmap {
+            position: relative;
+            width: 100%;
+            min-height: 2000px;
+        }
+
+        /* 中心节点 */
+        .root-node {
+            position: absolute;
+            left: 50%;
+            top: 50px;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            z-index: 10;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .root-node:hover {
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        /* 一级节点 */
+        .level1-node {
+            position: absolute;
+            background: white;
+            border: 3px solid #667eea;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 9;
+            min-width: 180px;
+            text-align: center;
+            white-space: pre-line;
+        }
+
+        .level1-node:hover {
+            background: #f0f4ff;
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .level1-node.expanded {
+            background: #e8f0ff;
+            border-color: #4caf50;
+        }
+
+        /* 二级节点 */
+        .level2-node {
+            position: absolute;
+            background: #f8f9fa;
+            border: 2px solid #2196f3;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #555;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 8;
+            min-width: 150px;
+            text-align: center;
+            white-space: pre-line;
+        }
+
+        .level2-node:hover {
+            background: #e3f2fd;
+            transform: scale(1.05);
+            border-color: #1976d2;
+        }
+
+        /* 三级节点 */
+        .level3-node {
+            position: absolute;
+            background: #fff;
+            border: 1px solid #ff9800;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #666;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 7;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .level3-node:hover {
+            background: #fff3e0;
+            border-color: #f57c00;
+            transform: scale(1.05);
+        }
+
+        /* 连接线 */
+        .connection-line {
+            position: absolute;
+            stroke: #999;
+            stroke-width: 2;
+            fill: none;
+            z-index: 1;
+            transition: all 0.3s;
+        }
+
+        .connection-line.active {
+            stroke: #667eea;
+            stroke-width: 3;
+        }
+
+        /* 详情面板 */
+        .detail-panel {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
+            transition: right 0.3s;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .detail-panel.show {
+            right: 0;
+        }
+
+        .detail-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .detail-close {
+            float: right;
+            cursor: pointer;
+            font-size: 24px;
+            opacity: 0.8;
+        }
+
+        .detail-close:hover {
+            opacity: 1;
+        }
+
+        .detail-content {
+            padding: 20px;
+        }
+
+        .detail-section {
+            margin-bottom: 20px;
+        }
+
+        .detail-section h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .detail-section p {
+            color: #666;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .detail-section ul {
+            margin-left: 20px;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .detail-section code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', monospace;
+            font-size: 13px;
+        }
+
+        /* 控制面板 */
+        .control-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .control-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .mindmap-container {
+                padding: 20px;
+            }
+            
+            .level1-node {
+                font-size: 16px;
+                padding: 12px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Flutter Engine 模块流程图</h1>
+            <p>交互式思维导图 - 展示 Flutter Engine 的完整架构和模块关系</p>
+        </div>
+
+        <div class="mindmap-container">
+            <svg class="mindmap" id="mindmapSvg" style="width: 100%; height: 2000px;"></svg>
+            <div class="mindmap" id="mindmapNodes"></div>
+        </div>
+    </div>
+
+    <div class="detail-panel" id="detailPanel">
+        <div class="detail-header">
+            <span id="detailTitle">模块详情</span>
+            <span class="detail-close" id="detailClose">×</span>
+        </div>
+        <div class="detail-content" id="detailContent"></div>
+    </div>
+
+    <div class="control-panel">
+        <button class="control-btn" id="expandAllBtn">展开全部</button>
+        <button class="control-btn" id="collapseAllBtn">收起全部</button>
+        <button class="control-btn" id="resetViewBtn">重置视图</button>
+    </div>
+
+    <script>
+        // 模块数据定义
+        const modules = {
+            root: {
+                id: 'root',
+                title: 'Flutter Engine',
+                x: 0,
+                y: 0,
+                level: 0,
+                description: 'Flutter Engine 是 Flutter 框架的核心渲染引擎，负责将 Widget 树转换为屏幕上的像素。',
+                details: {
+                    '核心职责': [
+                        '将声明式 UI 转换为渲染命令',
+                        '管理三棵树（Widget、Element、RenderObject）',
+                        '执行布局、绘制、合成流程',
+                        '与平台层交互'
+                    ],
+                    '设计原则': [
+                        '声明式 UI 编程模型',
+                        '高性能渲染（60fps/120fps）',
+                        '跨平台一致性',
+                        '可扩展的架构'
+                    ]
+                }
+            },
+            framework: {
+                id: 'framework',
+                title: 'Framework Layer\n框架层',
+                x: -400,
+                y: 200,
+                level: 1,
+                parent: 'root',
+                description: 'Flutter Framework 提供声明式 UI API，包括 Widget、Element、RenderObject 三棵树系统。',
+                details: {
+                    '核心组件': [
+                        'Widget System - 不可变的配置对象',
+                        'Element System - 生命周期管理',
+                        'RenderObject System - 渲染对象',
+                        'State Management - 状态管理'
+                    ],
+                    '主要功能': [
+                        '构建 Widget 树',
+                        '管理 Element 生命周期',
+                        'Diff 算法优化',
+                        '状态更新机制'
+                    ]
+                }
+            },
+            rendering: {
+                id: 'rendering',
+                title: 'Rendering Pipeline\n渲染管线',
+                x: 0,
+                y: 200,
+                level: 1,
+                parent: 'root',
+                description: '渲染管线负责将 RenderObject 树转换为屏幕像素，包括布局、绘制、合成三个阶段。',
+                details: {
+                    '三个阶段': [
+                        'Layout Phase - 布局阶段',
+                        'Paint Phase - 绘制阶段',
+                        'Composite Phase - 合成阶段'
+                    ],
+                    '核心流程': [
+                        'Constraints go down（约束向下传递）',
+                        'Sizes go up（尺寸向上返回）',
+                        'Parent sets position（父决定位置）',
+                        'Layer Tree 构建和合成'
+                    ]
+                }
+            },
+            platform: {
+                id: 'platform',
+                title: 'Platform Layer\n平台层',
+                x: 400,
+                y: 200,
+                level: 1,
+                parent: 'root',
+                description: '平台抽象层提供跨平台的渲染后端和平台通道，支持 Android、iOS、Web、Desktop 等平台。',
+                details: {
+                    '渲染后端': [
+                        'Skia - 2D 图形库',
+                        'Metal - iOS/macOS GPU',
+                        'Vulkan - 跨平台 GPU',
+                        'WebGL - Web 平台'
+                    ],
+                    '平台通道': [
+                        'Method Channel - 方法调用',
+                        'Event Channel - 事件流',
+                        'Platform Views - 原生视图嵌入'
+                    ]
+                }
+            },
+            // Framework 子模块
+            widgetSystem: {
+                id: 'widgetSystem',
+                title: 'Widget System',
+                x: -600,
+                y: 400,
+                level: 2,
+                parent: 'framework',
+                description: 'Widget 是不可变的配置对象，描述 UI 应该是什么样子。',
+                details: {
+                    '特点': [
+                        '不可变（Immutable）',
+                        '轻量级，可频繁创建',
+                        '纯函数式构建',
+                        '支持组合模式'
+                    ],
+                    '类型': [
+                        'StatelessWidget - 无状态组件',
+                        'StatefulWidget - 有状态组件',
+                        'InheritedWidget - 数据共享',
+                        'ProxyWidget - 代理组件'
+                    ]
+                }
+            },
+            elementSystem: {
+                id: 'elementSystem',
+                title: 'Element System',
+                x: -400,
+                y: 400,
+                level: 2,
+                parent: 'framework',
+                description: 'Element 是 Widget 的实例化，负责管理生命周期和状态，执行 diff 算法。',
+                details: {
+                    '职责': [
+                        'Widget 实例化',
+                        '生命周期管理',
+                        'Diff 算法执行',
+                        'RenderObject 关联'
+                    ],
+                    '优化': [
+                        'Element 复用机制',
+                        '增量更新策略',
+                        'Key 机制支持',
+                        '最小化重建'
+                    ]
+                }
+            },
+            renderObjectSystem: {
+                id: 'renderObjectSystem',
+                title: 'RenderObject System',
+                x: -200,
+                y: 400,
+                level: 2,
+                parent: 'framework',
+                description: 'RenderObject 负责实际的布局和绘制，是渲染树的核心节点。',
+                details: {
+                    '核心方法': [
+                        'layout() - 布局计算',
+                        'paint() - 绘制命令生成',
+                        'hitTest() - 点击测试',
+                        'composite() - 合成处理'
+                    ],
+                    '类型': [
+                        'RenderBox - 盒模型',
+                        'RenderSliver - 滑动布局',
+                        'RenderProxyBox - 代理模式',
+                        'RenderCustomLayout - 自定义布局'
+                    ]
+                }
+            },
+            // Rendering 子模块
+            layoutSystem: {
+                id: 'layoutSystem',
+                title: 'Layout System\n布局系统',
+                x: -200,
+                y: 400,
+                level: 2,
+                parent: 'rendering',
+                description: '布局系统负责确定每个 RenderObject 的尺寸和位置。',
+                details: {
+                    '核心原则': [
+                        'Constraints go down - 约束向下传递',
+                        'Sizes go up - 尺寸向上返回',
+                        'Parent sets position - 父决定位置'
+                    ],
+                    '约束类型': [
+                        'Tight Constraints - 严格约束',
+                        'Loose Constraints - 宽松约束',
+                        'Bounded Constraints - 有界约束',
+                        'Unbounded Constraints - 无界约束'
+                    ],
+                    '布局模式': [
+                        '代理模式（15%）',
+                        '约束修改模式（20%）',
+                        '弹性布局模式（15%）',
+                        '叶子节点模式（25%）'
+                    ]
+                }
+            },
+            paintSystem: {
+                id: 'paintSystem',
+                title: 'Paint System\n绘制系统',
+                x: 0,
+                y: 400,
+                level: 2,
+                parent: 'rendering',
+                description: '绘制系统生成绘制命令，构建 Layer Tree，准备合成。',
+                details: {
+                    '绘制流程': [
+                        '生成绘制命令',
+                        '构建 Layer Tree',
+                        '记录到 PictureLayer',
+                        '准备合成'
+                    ],
+                    'Layer 类型': [
+                        'PictureLayer - 绘制命令',
+                        'TextureLayer - 纹理',
+                        'ContainerLayer - 容器层',
+                        'OffsetLayer - 偏移层'
+                    ],
+                    '优化': [
+                        '重绘区域优化',
+                        '绘制缓存',
+                        '脏区域标记',
+                        '部分重绘支持'
+                    ]
+                }
+            },
+            compositingSystem: {
+                id: 'compositingSystem',
+                title: 'Compositing System\n合成系统',
+                x: 200,
+                y: 400,
+                level: 2,
+                parent: 'rendering',
+                description: '合成系统将 Layer Tree 转换为 GPU 命令，利用硬件加速进行最终合成。',
+                details: {
+                    '合成流程': [
+                        'Layer Tree 遍历',
+                        '转换为 GPU 命令',
+                        '硬件加速合成',
+                        '显示到屏幕'
+                    ],
+                    '优化技术': [
+                        'GPU 加速',
+                        'Layer 复用',
+                        '合成树优化',
+                        '帧缓冲管理'
+                    ],
+                    '性能目标': [
+                        '60 FPS（标准）',
+                        '120 FPS（高刷新率）',
+                        '低延迟渲染',
+                        '流畅动画'
+                    ]
+                }
+            },
+            // Platform 子模块
+            renderingBackend: {
+                id: 'renderingBackend',
+                title: 'Rendering Backend\n渲染后端',
+                x: 300,
+                y: 400,
+                level: 2,
+                parent: 'platform',
+                description: '渲染后端提供底层图形 API 抽象，支持多种图形库。',
+                details: {
+                    '支持的后端': [
+                        'Skia - Google 2D 图形库',
+                        'Metal - Apple GPU API',
+                        'Vulkan - Khronos GPU API',
+                        'WebGL - Web 图形 API'
+                    ],
+                    '功能': [
+                        '2D 图形绘制',
+                        '纹理管理',
+                        '着色器支持',
+                        '硬件加速'
+                    ]
+                }
+            },
+            embedder: {
+                id: 'embedder',
+                title: 'Embedder\n平台嵌入层',
+                x: 500,
+                y: 400,
+                level: 2,
+                parent: 'platform',
+                description: 'Embedder 负责将 Flutter Engine 嵌入到各个平台，处理平台特定的集成。',
+                details: {
+                    '支持平台': [
+                        'Android - Java/Kotlin',
+                        'iOS - Objective-C/Swift',
+                        'Web - JavaScript',
+                        'Desktop - Windows/macOS/Linux'
+                    ],
+                    '功能': [
+                        '窗口管理',
+                        '输入事件处理',
+                        '平台通道',
+                        '资源管理'
+                    ]
+                }
+            }
+        };
+
+        // 应用状态
+        const app = {
+            expandedNodes: new Set(['root']),
+            selectedNode: null,
+            scale: 1,
+            offsetX: 0,
+            offsetY: 0
+        };
+
+        // 初始化
+        function init() {
+            renderMindmap();
+            setupEventListeners();
+        }
+
+        // 渲染思维导图
+        function renderMindmap() {
+            const container = document.getElementById('mindmapNodes');
+            const svg = document.getElementById('mindmapSvg');
+            
+            // 清空
+            container.innerHTML = '';
+            svg.innerHTML = '';
+
+            // 计算中心位置
+            const containerRect = container.getBoundingClientRect();
+            const centerX = containerRect.width / 2;
+            const centerY = 100;
+
+            // 渲染根节点
+            renderNode(modules.root, centerX, centerY, container);
+
+            // 渲染一级节点
+            Object.values(modules).forEach(module => {
+                if (module.level === 1) {
+                    const x = centerX + module.x;
+                    const y = centerY + module.y;
+                    renderNode(module, x, y, container);
+                    renderConnection(svg, centerX, centerY, x, y);
+                }
+            });
+
+            // 渲染二级节点（如果父节点展开）
+            Object.values(modules).forEach(module => {
+                if (module.level === 2 && app.expandedNodes.has(module.parent)) {
+                    const parent = modules[module.parent];
+                    const parentX = centerX + parent.x;
+                    const parentY = centerY + parent.y;
+                    const x = centerX + module.x;
+                    const y = centerY + module.y;
+                    renderNode(module, x, y, container);
+                    renderConnection(svg, parentX, parentY, x, y);
+                }
+            });
+        }
+
+        // 渲染节点
+        function renderNode(module, x, y, container) {
+            const node = document.createElement('div');
+            const className = module.level === 0 ? 'root-node' : 
+                             module.level === 1 ? 'level1-node' : 
+                             module.level === 2 ? 'level2-node' : 'level3-node';
+            node.className = className;
+            node.textContent = module.title;
+            node.style.left = x + 'px';
+            node.style.top = y + 'px';
+            node.dataset.moduleId = module.id;
+            
+            if (app.expandedNodes.has(module.id)) {
+                node.classList.add('expanded');
+            }
+
+            node.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleNode(module.id);
+                showDetails(module);
+            });
+
+            container.appendChild(node);
+        }
+
+        // 渲染连接线
+        function renderConnection(svg, x1, y1, x2, y2) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x1);
+            line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2);
+            line.setAttribute('y2', y2);
+            line.classList.add('connection-line');
+            svg.appendChild(line);
+        }
+
+        // 切换节点展开/收起
+        function toggleNode(nodeId) {
+            if (app.expandedNodes.has(nodeId)) {
+                app.expandedNodes.delete(nodeId);
+            } else {
+                app.expandedNodes.add(nodeId);
+            }
+            renderMindmap();
+        }
+
+        // 显示详情
+        function showDetails(module) {
+            const panel = document.getElementById('detailPanel');
+            const title = document.getElementById('detailTitle');
+            const content = document.getElementById('detailContent');
+
+            title.textContent = module.title;
+            
+            let html = `<div class="detail-section">
+                <h3>📝 描述</h3>
+                <p>${module.description}</p>
+            </div>`;
+
+            if (module.details) {
+                Object.entries(module.details).forEach(([key, values]) => {
+                    html += `<div class="detail-section">
+                        <h3>${key}</h3>
+                        <ul>`;
+                    values.forEach(value => {
+                        html += `<li>${value}</li>`;
+                    });
+                    html += `</ul></div>`;
+                });
+            }
+
+            content.innerHTML = html;
+            panel.classList.add('show');
+        }
+
+        // 设置事件监听
+        function setupEventListeners() {
+            // 关闭详情面板
+            document.getElementById('detailClose').addEventListener('click', () => {
+                document.getElementById('detailPanel').classList.remove('show');
+            });
+
+            // 展开全部
+            document.getElementById('expandAllBtn').addEventListener('click', () => {
+                Object.keys(modules).forEach(key => {
+                    app.expandedNodes.add(key);
+                });
+                renderMindmap();
+            });
+
+            // 收起全部
+            document.getElementById('collapseAllBtn').addEventListener('click', () => {
+                app.expandedNodes.clear();
+                app.expandedNodes.add('root');
+                renderMindmap();
+            });
+
+            // 重置视图
+            document.getElementById('resetViewBtn').addEventListener('click', () => {
+                app.expandedNodes.clear();
+                app.expandedNodes.add('root');
+                app.selectedNode = null;
+                document.getElementById('detailPanel').classList.remove('show');
+                renderMindmap();
+            });
+        }
+
+        // 启动
+        init();
+    </script>
+</body>
+</html>
+
