@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚠️ CORS 错误 - 需要启动本地服务器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 800px;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .error-icon {
+            text-align: center;
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        h1 {
+            color: #f5576c;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 32px;
+        }
+
+        .problem {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .problem h2 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .problem p {
+            color: #856404;
+            line-height: 1.6;
+        }
+
+        .solution {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .solution h2 {
+            color: #155724;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .steps {
+            margin-top: 15px;
+        }
+
+        .step {
+            margin-bottom: 20px;
+        }
+
+        .step h3 {
+            color: #155724;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: Monaco, Consolas, monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .code .comment {
+            color: #75715e;
+        }
+
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: transform 0.2s;
+            margin: 5px;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .tip {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .tip strong {
+            color: #0d47a1;
+        }
+
+        .links {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .quick-link {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .quick-link:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .quick-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-icon">⚠️</div>
+        <h1>CORS 错误 - 需要本地服务器</h1>
+
+        <div class="problem">
+            <h2>❓ 为什么会出现这个错误？</h2>
+            <p>
+                浏览器的安全策略（CORS - 跨域资源共享）阻止了直接通过 <code>file://</code> 协议加载某些资源。
+                这是正常的安全机制，特别是在加载 Markdown 文件或使用 AJAX 请求时。
+            </p>
+        </div>
+
+        <div class="solution">
+            <h2>✅ 解决方案（推荐）</h2>
+            
+            <div class="steps">
+                <div class="step">
+                    <h3>方法 1: 使用启动脚本（最简单）</h3>
+                    <div class="code">
+<span class="comment"># 在终端中执行（确保在 doc 目录下）:</span>
+./start_server.sh
+                    </div>
+                    <p style="margin-top: 10px; color: #155724;">
+                        ✨ 脚本会自动启动服务器并在浏览器中打开主页！
+                    </p>
+                </div>
+
+                <div class="step">
+                    <h3>方法 2: 手动启动 Python 服务器</h3>
+                    <div class="code">
+<span class="comment"># 切换到 doc 目录:</span>
+cd /Users/zongxin/mind/app_workspace/doc
+
+<span class="comment"># 启动 Python 服务器:</span>
+python3 -m http.server 8000
+
+<span class="comment"># 然后在浏览器访问:</span>
+<span class="comment"># http://localhost:8000/index.html</span>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <h3>方法 3: 使用 VSCode/Cursor Live Server</h3>
+                    <p style="color: #155724; margin-bottom: 10px;">
+                        如果你使用 VSCode 或 Cursor：
+                    </p>
+                    <ol style="color: #155724; margin-left: 20px;">
+                        <li>安装 "Live Server" 扩展</li>
+                        <li>右键点击任意 HTML 文件</li>
+                        <li>选择 "Open with Live Server"</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="tip">
+            <strong>💡 Pro Tip:</strong> 启动服务器后，你可以在浏览器中访问所有文档和工具，包括 Markdown 文件查看器！
+        </div>
+
+        <div class="quick-links">
+            <div class="quick-link">
+                <div style="font-size: 32px; margin-bottom: 10px;">🏠</div>
+                <a href="http://localhost:8000/index.html">主页</a>
+            </div>
+            <div class="quick-link">
+                <div style="font-size: 32px; margin-bottom: 10px;">📖</div>
+                <a href="http://localhost:8000/markdown_viewer.html">Markdown 查看器</a>
+            </div>
+            <div class="quick-link">
+                <div style="font-size: 32px; margin-bottom: 10px;">🔤</div>
+                <a href="http://localhost:8000/markdown_viewer.html?file=FLUTTER_LANGUAGE_ANALYSIS.md">Flutter 语言分析</a>
+            </div>
+            <div class="quick-link">
+                <div style="font-size: 32px; margin-bottom: 10px;">⌨️</div>
+                <a href="http://localhost:8000/cursor_codelens_reference.html">CodeLens 参考</a>
+            </div>
+        </div>
+
+        <div class="tip" style="margin-top: 30px; background: #fff3cd; border-color: #ffc107;">
+            <strong style="color: #856404;">⚠️ 注意:</strong>
+            <span style="color: #856404;">
+                上面的链接只有在启动本地服务器后才能访问。请先执行 <code>./start_server.sh</code> 或使用其他方法启动服务器。
+            </span>
+        </div>
+
+        <div class="links">
+            <h3 style="margin-bottom: 15px; color: #333;">📚 相关文档</h3>
+            <a href="QUICKSTART.md" class="button">📘 快速开始</a>
+            <a href="README.md" class="button">📖 README</a>
+            <a href=".vscode/README.md" class="button">⚙️ 编辑器配置</a>
+        </div>
+
+        <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #eee; text-align: center; color: #666;">
+            <p>Mind App Development Team © 2025</p>
+            <p style="margin-top: 10px; font-size: 14px;">需要帮助？查看项目文档或提交 Issue</p>
+        </div>
+    </div>
+
+    <script>
+        // 检测是否通过 file:// 协议打开
+        if (window.location.protocol === 'file:') {
+            console.log('⚠️ 检测到 file:// 协议，显示帮助页面');
+        }
+
+        // 检测服务器是否运行
+        function checkServer() {
+            fetch('http://localhost:8000/index.html', { mode: 'no-cors' })
+                .then(() => {
+                    const tip = document.createElement('div');
+                    tip.className = 'tip';
+                    tip.style.background = '#d4edda';
+                    tip.style.borderColor = '#28a745';
+                    tip.innerHTML = '<strong style="color: #155724;">✅ 检测到本地服务器正在运行！</strong> <a href="http://localhost:8000/index.html" style="color: #155724; text-decoration: underline;">点击这里访问主页</a>';
+                    document.querySelector('.container').insertBefore(tip, document.querySelector('.quick-links'));
+                })
+                .catch(() => {
+                    console.log('服务器未运行');
+                });
+        }
+
+        // 页面加载后检测服务器
+        window.addEventListener('load', checkServer);
+    </script>
+</body>
+</html>
+

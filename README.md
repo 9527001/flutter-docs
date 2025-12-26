@@ -94,6 +94,19 @@ doc/
   - 进阶研究方向
   - 学习检查清单
 
+### 🎨 Widget 参考
+- [flutter_widgets_explorer.html](flutter_widgets_explorer.html) - **Flutter Widgets 完整列表（交互式浏览器）** ⭐
+  - 450+ 个内置 Widgets
+  - 19 个功能分类
+  - 实时搜索和筛选
+  - Material Design & Cupertino 组件
+  - 详细说明和使用建议
+- [FLUTTER_WIDGETS_COMPLETE_LIST.md](FLUTTER_WIDGETS_COMPLETE_LIST.md) - **Flutter Widgets 完整列表（Markdown 文档）**
+  - 详细的 Widget 分类
+  - 完整的功能说明
+  - 学习路径建议
+  - 性能优化技巧
+
 ### 快速上手
 - [QUICKSTART.md](QUICKSTART.md) - 5分钟快速上手
 - [USAGE_DEMO.txt](USAGE_DEMO.txt) - 使用演示和示例

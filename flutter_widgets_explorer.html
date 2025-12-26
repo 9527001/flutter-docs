@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flutter Widgets 完整列表浏览器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #02aab0 0%, #00cdac 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px 40px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+
+        .controls {
+            padding: 30px 40px;
+            background: white;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.1em;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #e9ecef;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .filter-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .category {
+            margin-bottom: 40px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .category-icon {
+            font-size: 1.5em;
+            margin-right: 15px;
+        }
+
+        .category-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2c3e50;
+            flex: 1;
+        }
+
+        .category-count {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+
+        .toggle-icon {
+            font-size: 1.2em;
+            color: #6c757d;
+            transition: transform 0.3s;
+        }
+
+        .category.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .widgets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .category.collapsed .widgets-grid {
+            display: none;
+        }
+
+        .widget-card {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .widget-card:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .widget-name {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+
+        .widget-desc {
+            color: #6c757d;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .no-results-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .footer a {
+            color: #00cdac;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .highlight {
+            background-color: yellow;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .widgets-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Flutter Widgets 完整列表</h1>
+            <p>探索 Flutter 框架中所有内置的 Widgets</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalWidgets">450+</div>
+                <div class="stat-label">总 Widgets 数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">19</div>
+                <div class="stat-label">主要分类</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100+</div>
+                <div class="stat-label">Material Design</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">40+</div>
+                <div class="stat-label">Cupertino (iOS)</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <input type="text" class="search-box" id="searchBox" placeholder="🔍 搜索 Widget... (例如: Button, Text, Container)">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">全部</button>
+                <button class="filter-btn" data-filter="基础">基础</button>
+                <button class="filter-btn" data-filter="Material">Material</button>
+                <button class="filter-btn" data-filter="Cupertino">Cupertino</button>
+                <button class="filter-btn" data-filter="布局">布局</button>
+                <button class="filter-btn" data-filter="动画">动画</button>
+                <button class="filter-btn" data-filter="输入">输入</button>
+                <button class="filter-btn" data-filter="滚动">滚动</button>
+            </div>
+        </div>
+
+        <div class="content" id="content">
+            <!-- 动态生成内容 -->
+        </div>
+
+        <div class="footer">
+            <p>📚 参考资源：<a href="https://flutter.dev/docs/development/ui/widgets" target="_blank">Flutter 官方 Widget 目录</a></p>
+            <p style="margin-top: 10px;">最后更新：2025-12-26 | 适用于 Flutter 3.x+</p>
+        </div>
+    </div>
+
+    <script>
+        const widgetsData = {
+            "基础 Widgets": {
+                icon: "🔧",
+                widgets: [
+                    { name: "Widget", desc: "所有 Widget 的基类" },
+                    { name: "StatelessWidget", desc: "无状态 Widget" },
+                    { name: "StatefulWidget", desc: "有状态 Widget" },
+                    { name: "InheritedWidget", desc: "用于数据传递的特殊 Widget" },
+                    { name: "Text", desc: "文本显示组件" },
+                    { name: "Icon", desc: "图标显示组件" },
+                    { name: "Image", desc: "图片显示组件" },
+                    { name: "Container", desc: "容器组件，可设置边距、装饰等" },
+                    { name: "Placeholder", desc: "占位符" },
+                    { name: "FlutterLogo", desc: "Flutter Logo" }
+                ]
+            },
+            "Material Design Widgets": {
+                icon: "📱",
+                widgets: [
+                    { name: "MaterialApp", desc: "Material 应用根 Widget" },
+                    { name: "Scaffold", desc: "提供基本的页面结构" },
+                    { name: "AppBar", desc: "应用栏" },
+                    { name: "BottomNavigationBar", desc: "底部导航栏" },
+                    { name: "Drawer", desc: "抽屉菜单" },
+                    { name: "ElevatedButton", desc: "浮起按钮" },
+                    { name: "TextButton", desc: "文本按钮" },
+                    { name: "OutlinedButton", desc: "轮廓按钮" },
+                    { name: "IconButton", desc: "图标按钮" },
+                    { name: "FloatingActionButton", desc: "浮动操作按钮" },
+                    { name: "TextField", desc: "文本输入框" },
+                    { name: "Card", desc: "卡片组件" },
+                    { name: "AlertDialog", desc: "警告对话框" },
+                    { name: "SnackBar", desc: "底部提示条" },
+                    { name: "Chip", desc: "标签纸片" },
+                    { name: "ListTile", desc: "列表瓦片" },
+                    { name: "TabBar", desc: "标签栏" },
+                    { name: "TabBarView", desc: "标签页视图" },
+                    { name: "CircularProgressIndicator", desc: "圆形进度指示器" },
+                    { name: "LinearProgressIndicator", desc: "线性进度指示器" },
+                    { name: "Checkbox", desc: "复选框" },
+                    { name: "Radio", desc: "单选按钮" },
+                    { name: "Switch", desc: "开关" },
+                    { name: "Slider", desc: "滑块" },
+                    { name: "DataTable", desc: "数据表格" },
+                    { name: "Tooltip", desc: "工具提示" },
+                    { name: "PopupMenuButton", desc: "弹出菜单按钮" },
+                    { name: "BottomSheet", desc: "底部面板" },
+                    { name: "ExpansionTile", desc: "可展开的列表项" },
+                    { name: "Stepper", desc: "步进器" }
+                ]
+            },
+            "Cupertino Widgets (iOS风格)": {
+                icon: "🍎",
+                widgets: [
+                    { name: "CupertinoApp", desc: "Cupertino 应用根 Widget" },
+                    { name: "CupertinoPageScaffold", desc: "Cupertino 页面脚手架" },
+                    { name: "CupertinoNavigationBar", desc: "iOS 风格导航栏" },
+                    { name: "CupertinoTabScaffold", desc: "iOS 风格标签脚手架" },
+                    { name: "CupertinoTabBar", desc: "iOS 风格标签栏" },
+                    { name: "CupertinoButton", desc: "iOS 风格按钮" },
+                    { name: "CupertinoTextField", desc: "iOS 风格文本输入框" },
+                    { name: "CupertinoSwitch", desc: "iOS 风格开关" },
+                    { name: "CupertinoSlider", desc: "iOS 风格滑块" },
+                    { name: "CupertinoPicker", desc: "iOS 风格选择器" },
+                    { name: "CupertinoDatePicker", desc: "iOS 风格日期选择器" },
+                    { name: "CupertinoAlertDialog", desc: "iOS 风格警告对话框" },
+                    { name: "CupertinoActionSheet", desc: "iOS 风格操作表" },
+                    { name: "CupertinoActivityIndicator", desc: "iOS 风格活动指示器" },
+                    { name: "CupertinoScrollbar", desc: "iOS 风格滚动条" },
+                    { name: "CupertinoSegmentedControl", desc: "iOS 风格分段控件" }
+                ]
+            },
+            "布局 Widgets": {
+                icon: "📐",
+                widgets: [
+                    { name: "Row", desc: "水平布局" },
+                    { name: "Column", desc: "垂直布局" },
+                    { name: "Stack", desc: "堆叠布局" },
+                    { name: "Container", desc: "容器，组合了多种布局功能" },
+                    { name: "Padding", desc: "内边距" },
+                    { name: "Center", desc: "居中" },
+                    { name: "Align", desc: "对齐" },
+                    { name: "Expanded", desc: "扩展填充可用空间" },
+                    { name: "Flexible", desc: "灵活布局" },
+                    { name: "Spacer", desc: "空白间隔" },
+                    { name: "Wrap", desc: "流式布局，自动换行" },
+                    { name: "Flow", desc: "流动布局" },
+                    { name: "Table", desc: "表格布局" },
+                    { name: "GridView", desc: "网格布局" },
+                    { name: "ListView", desc: "列表布局" },
+                    { name: "SizedBox", desc: "固定大小盒子" },
+                    { name: "ConstrainedBox", desc: "约束盒子" },
+                    { name: "UnconstrainedBox", desc: "无约束盒子" },
+                    { name: "AspectRatio", desc: "宽高比" },
+                    { name: "FittedBox", desc: "缩放适配盒子" },
+                    { name: "FractionallySizedBox", desc: "比例大小盒子" },
+                    { name: "Positioned", desc: "Stack 中的绝对定位" },
+                    { name: "Transform", desc: "变换（旋转、缩放、平移）" },
+                    { name: "LayoutBuilder", desc: "根据父组件约束构建" }
+                ]
+            },
+            "文本 Widgets": {
+                icon: "📝",
+                widgets: [
+                    { name: "Text", desc: "基础文本" },
+                    { name: "RichText", desc: "富文本，支持多样式" },
+                    { name: "Text.rich", desc: "富文本构造器" },
+                    { name: "TextSpan", desc: "文本片段" },
+                    { name: "SelectableText", desc: "可选择文本" },
+                    { name: "DefaultTextStyle", desc: "默认文本样式" }
+                ]
+            },
+            "输入 Widgets": {
+                icon: "⌨️",
+                widgets: [
+                    { name: "TextField", desc: "Material 文本输入框" },
+                    { name: "TextFormField", desc: "表单文本输入框" },
+                    { name: "Form", desc: "表单容器" },
+                    { name: "Checkbox", desc: "复选框" },
+                    { name: "Radio", desc: "单选按钮" },
+                    { name: "Switch", desc: "开关" },
+                    { name: "Slider", desc: "滑块" },
+                    { name: "RangeSlider", desc: "范围滑块" },
+                    { name: "DropdownButton", desc: "下拉选择" },
+                    { name: "CupertinoTextField", desc: "iOS 风格文本输入" },
+                    { name: "CupertinoPicker", desc: "iOS 风格选择器" },
+                    { name: "DatePickerDialog", desc: "日期选择器" },
+                    { name: "TimePickerDialog", desc: "时间选择器" }
+                ]
+            },
+            "按钮 Widgets": {
+                icon: "🔘",
+                widgets: [
+                    { name: "ElevatedButton", desc: "Material 浮起按钮" },
+                    { name: "TextButton", desc: "Material 文本按钮" },
+                    { name: "OutlinedButton", desc: "Material 轮廓按钮" },
+                    { name: "IconButton", desc: "图标按钮" },
+                    { name: "FloatingActionButton", desc: "浮动操作按钮" },
+                    { name: "CupertinoButton", desc: "iOS 风格按钮" },
+                    { name: "InkWell", desc: "墨水波纹效果按钮" },
+                    { name: "GestureDetector", desc: "手势检测器" },
+                    { name: "BackButton", desc: "返回按钮" },
+                    { name: "CloseButton", desc: "关闭按钮" }
+                ]
+            },
+            "图像和图标 Widgets": {
+                icon: "🖼️",
+                widgets: [
+                    { name: "Image", desc: "图片显示" },
+                    { name: "Image.asset", desc: "资源图片" },
+                    { name: "Image.network", desc: "网络图片" },
+                    { name: "Image.file", desc: "文件图片" },
+                    { name: "Icon", desc: "图标" },
+                    { name: "ImageIcon", desc: "图片图标" },
+                    { name: "CircleAvatar", desc: "圆形头像" },
+                    { name: "FlutterLogo", desc: "Flutter Logo" }
+                ]
+            },
+            "滚动 Widgets": {
+                icon: "📜",
+                widgets: [
+                    { name: "ListView", desc: "列表视图" },
+                    { name: "ListView.builder", desc: "构建器列表" },
+                    { name: "ListView.separated", desc: "带分隔符列表" },
+                    { name: "GridView", desc: "网格视图" },
+                    { name: "GridView.builder", desc: "构建器网格" },
+                    { name: "GridView.count", desc: "固定列数网格" },
+                    { name: "PageView", desc: "页面视图" },
+                    { name: "SingleChildScrollView", desc: "单子滚动视图" },
+                    { name: "CustomScrollView", desc: "自定义滚动视图" },
+                    { name: "NestedScrollView", desc: "嵌套滚动视图" },
+                    { name: "Scrollbar", desc: "滚动条" },
+                    { name: "RefreshIndicator", desc: "下拉刷新指示器" },
+                    { name: "ReorderableListView", desc: "可重排序列表" },
+                    { name: "DraggableScrollableSheet", desc: "可拖动滚动表单" }
+                ]
+            },
+            "导航 Widgets": {
+                icon: "🧭",
+                widgets: [
+                    { name: "Navigator", desc: "导航器" },
+                    { name: "MaterialPageRoute", desc: "Material 页面路由" },
+                    { name: "CupertinoPageRoute", desc: "iOS 页面路由" },
+                    { name: "AppBar", desc: "应用栏" },
+                    { name: "BottomNavigationBar", desc: "底部导航栏" },
+                    { name: "TabBar", desc: "标签栏" },
+                    { name: "Drawer", desc: "抽屉" },
+                    { name: "Hero", desc: "英雄动画" },
+                    { name: "WillPopScope", desc: "返回拦截" }
+                ]
+            },
+            "对话框和弹窗 Widgets": {
+                icon: "💬",
+                widgets: [
+                    { name: "AlertDialog", desc: "Material 警告对话框" },
+                    { name: "SimpleDialog", desc: "Material 简单对话框" },
+                    { name: "CupertinoAlertDialog", desc: "iOS 警告对话框" },
+                    { name: "CupertinoActionSheet", desc: "iOS 操作表" },
+                    { name: "BottomSheet", desc: "底部面板" },
+                    { name: "SnackBar", desc: "底部提示条" },
+                    { name: "Tooltip", desc: "工具提示" },
+                    { name: "PopupMenuButton", desc: "弹出菜单" },
+                    { name: "showDialog", desc: "显示对话框（函数）" },
+                    { name: "showModalBottomSheet", desc: "显示模态底部面板（函数）" }
+                ]
+            },
+            "动画 Widgets": {
+                icon: "✨",
+                widgets: [
+                    { name: "AnimatedContainer", desc: "动画容器" },
+                    { name: "AnimatedOpacity", desc: "动画透明度" },
+                    { name: "AnimatedPadding", desc: "动画内边距" },
+                    { name: "AnimatedAlign", desc: "动画对齐" },
+                    { name: "AnimatedPositioned", desc: "动画定位" },
+                    { name: "AnimatedCrossFade", desc: "交叉淡入淡出" },
+                    { name: "AnimatedSwitcher", desc: "动画切换器" },
+                    { name: "Hero", desc: "英雄动画" },
+                    { name: "FadeTransition", desc: "淡入淡出过渡" },
+                    { name: "ScaleTransition", desc: "缩放过渡" },
+                    { name: "SlideTransition", desc: "滑动过渡" },
+                    { name: "RotationTransition", desc: "旋转过渡" },
+                    { name: "AnimatedBuilder", desc: "动画构建器" },
+                    { name: "TweenAnimationBuilder", desc: "补间动画构建器" },
+                    { name: "AnimatedList", desc: "动画列表" }
+                ]
+            },
+            "绘制和效果 Widgets": {
+                icon: "🎨",
+                widgets: [
+                    { name: "CustomPaint", desc: "自定义绘制" },
+                    { name: "Opacity", desc: "透明度" },
+                    { name: "ClipRect", desc: "矩形裁剪" },
+                    { name: "ClipRRect", desc: "圆角矩形裁剪" },
+                    { name: "ClipOval", desc: "椭圆裁剪" },
+                    { name: "ClipPath", desc: "路径裁剪" },
+                    { name: "DecoratedBox", desc: "装饰盒子" },
+                    { name: "BackdropFilter", desc: "背景滤镜" },
+                    { name: "ShaderMask", desc: "着色器遮罩" },
+                    { name: "ColorFiltered", desc: "颜色滤镜" },
+                    { name: "PhysicalModel", desc: "物理模型（阴影）" }
+                ]
+            },
+            "交互模型 Widgets": {
+                icon: "👆",
+                widgets: [
+                    { name: "GestureDetector", desc: "手势检测器" },
+                    { name: "InkWell", desc: "墨水波纹响应" },
+                    { name: "Dismissible", desc: "可滑动删除" },
+                    { name: "Draggable", desc: "可拖动" },
+                    { name: "DragTarget", desc: "拖动目标" },
+                    { name: "InteractiveViewer", desc: "可缩放平移查看器" },
+                    { name: "AbsorbPointer", desc: "吸收指针事件" },
+                    { name: "IgnorePointer", desc: "忽略指针事件" },
+                    { name: "Listener", desc: "原始指针监听器" }
+                ]
+            },
+            "异步 Widgets": {
+                icon: "⏳",
+                widgets: [
+                    { name: "FutureBuilder", desc: "Future 构建器" },
+                    { name: "StreamBuilder", desc: "Stream 构建器" },
+                    { name: "ValueListenableBuilder", desc: "值监听构建器" }
+                ]
+            },
+            "其他实用 Widgets": {
+                icon: "🛠️",
+                widgets: [
+                    { name: "SafeArea", desc: "安全区域" },
+                    { name: "MediaQuery", desc: "媒体查询" },
+                    { name: "Theme", desc: "主题" },
+                    { name: "Visibility", desc: "可见性控制" },
+                    { name: "Offstage", desc: "离屏渲染" },
+                    { name: "Divider", desc: "分隔线" },
+                    { name: "VerticalDivider", desc: "垂直分隔线" },
+                    { name: "RepaintBoundary", desc: "重绘边界" },
+                    { name: "Builder", desc: "构建器" },
+                    { name: "LayoutBuilder", desc: "布局构建器" },
+                    { name: "OrientationBuilder", desc: "方向构建器" },
+                    { name: "Focus", desc: "焦点管理" },
+                    { name: "Semantics", desc: "语义/无障碍" }
+                ]
+            }
+        };
+
+        let currentFilter = 'all';
+        let searchTerm = '';
+
+        function renderWidgets() {
+            const content = document.getElementById('content');
+            content.innerHTML = '';
+
+            let totalCount = 0;
+            let visibleCount = 0;
+
+            Object.entries(widgetsData).forEach(([category, data]) => {
+                const shouldShowCategory = currentFilter === 'all' || category.includes(currentFilter);
+                
+                const filteredWidgets = data.widgets.filter(widget => {
+                    const matchesSearch = searchTerm === '' || 
+                        widget.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        widget.desc.toLowerCase().includes(searchTerm.toLowerCase());
+                    return matchesSearch;
+                });
+
+                totalCount += data.widgets.length;
+
+                if (shouldShowCategory && filteredWidgets.length > 0) {
+                    visibleCount += filteredWidgets.length;
+                    
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'category';
+                    categoryDiv.innerHTML = `
+                        <div class="category-header">
+                            <span class="category-icon">${data.icon}</span>
+                            <span class="category-title">${category}</span>
+                            <span class="category-count">${filteredWidgets.length}</span>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div class="widgets-grid">
+                            ${filteredWidgets.map(widget => `
+                                <div class="widget-card">
+                                    <div class="widget-name">${highlightText(widget.name, searchTerm)}</div>
+                                    <div class="widget-desc">${highlightText(widget.desc, searchTerm)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+
+                    categoryDiv.querySelector('.category-header').addEventListener('click', () => {
+                        categoryDiv.classList.toggle('collapsed');
+                    });
+
+                    content.appendChild(categoryDiv);
+                }
+            });
+
+            if (visibleCount === 0) {
+                content.innerHTML = `
+                    <div class="no-results">
+                        <div class="no-results-icon">🔍</div>
+                        <h2>未找到匹配的 Widget</h2>
+                        <p>尝试使用不同的搜索词或筛选条件</p>
+                    </div>
+                `;
+            }
+
+            // 更新统计
+            document.getElementById('totalWidgets').textContent = visibleCount;
+        }
+
+        function highlightText(text, term) {
+            if (!term) return text;
+            const regex = new RegExp(`(${term})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        // 搜索功能
+        document.getElementById('searchBox').addEventListener('input', (e) => {
+            searchTerm = e.target.value;
+            renderWidgets();
+        });
+
+        // 筛选功能
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderWidgets();
+            });
+        });
+
+        // 初始渲染
+        renderWidgets();
+    </script>
+</body>
+</html>

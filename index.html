@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -148,12 +149,28 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- 头部 -->
         <div class="header">
             <h1>📚 Mind App</h1>
             <p>开发文档与工具集合</p>
+        </div>
+
+        <!-- CORS 提示（仅在 file:// 协议下显示） -->
+        <div id="cors-warning" style="display: none; background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+            <h3 style="color: #856404; margin-bottom: 10px;">⚠️ 遇到 CORS 错误或文件无法加载？</h3>
+            <p style="color: #856404; margin-bottom: 15px;">
+                请使用本地服务器查看文档。在终端执行：
+            </p>
+            <div style="background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 8px; font-family: Monaco, monospace; margin-bottom: 15px;">
+./start_server.sh
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <a href="HOW_TO_VIEW.md" style="display: inline-block; background: #ffc107; color: #856404; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500;">📖 查看详细说明</a>
+                <a href="CORS_ERROR_HELP.html" style="display: inline-block; background: #ffc107; color: #856404; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500;">🆘 获取帮助</a>
+            </div>
         </div>
 
         <!-- 卡片网格 -->
@@ -209,7 +226,8 @@
             </div>
 
             <!-- Flutter Framework 架构设计 -->
-            <div class="card" onclick="window.location.href='markdown_viewer.html?file=FLUTTER_FRAMEWORK_ARCHITECTURE.md'">
+            <div class="card"
+                onclick="window.location.href='markdown_viewer.html?file=FLUTTER_FRAMEWORK_ARCHITECTURE.md'">
                 <div class="card-icon">🏗️</div>
                 <div class="card-title">Flutter Framework 架构设计</div>
                 <div class="card-description">
@@ -236,6 +254,26 @@
                     从 Dart 语言角度深入分析 Flutter，理解语言特性如何影响框架设计和性能优化。
                 </div>
                 <a href="markdown_viewer.html?file=FLUTTER_LANGUAGE_ANALYSIS.md" class="card-button">立即阅读 →</a>
+            </div>
+
+            <!-- Cursor CodeLens 快速参考 -->
+            <div class="card" onclick="window.location.href='cursor_codelens_reference.html'">
+                <div class="card-icon">⌨️</div>
+                <div class="card-title">Cursor CodeLens 快速参考</div>
+                <div class="card-description">
+                    快速参考卡片，掌握 override 方法导航、快捷键和 CodeLens 功能，提升代码导航效率。
+                </div>
+                <a href="cursor_codelens_reference.html" class="card-button">立即查看 →</a>
+            </div>
+
+            <!-- Flutter Widgets 完整列表 -->
+            <div class="card" onclick="window.location.href='flutter_widgets_explorer.html'">
+                <div class="card-icon">🎨</div>
+                <div class="card-title">Flutter Widgets 完整列表</div>
+                <div class="card-description">
+                    交互式浏览器，穷举 450+ 个 Flutter 内置 Widgets，按功能分类，支持搜索和筛选。
+                </div>
+                <a href="flutter_widgets_explorer.html" class="card-button">立即探索 →</a>
             </div>
 
             <!-- 占位卡片 -->
@@ -356,6 +394,48 @@
                     </a>
                 </li>
                 <li>
+                    <a href="cursor_codelens_reference.html" class="docs-link">
+                        <span>⌨️</span>
+                        <span>开发工具 - Cursor CodeLens 快速参考</span>
+                    </a>
+                </li>
+                <li>
+                    <a href=".vscode/CODELENS_GUIDE.md" class="docs-link">
+                        <span>📖</span>
+                        <span>开发工具 - CodeLens 完整使用指南</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="flutter_widgets_explorer.html" class="docs-link">
+                        <span>🎨</span>
+                        <span>Widget 参考 - Flutter Widgets 完整列表（交互式浏览器）</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="markdown_viewer.html?file=FLUTTER_WIDGETS_COMPLETE_LIST.md" class="docs-link">
+                        <span>📋</span>
+                        <span>Widget 参考 - Flutter Widgets 完整列表（Markdown 文档）</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="HOW_TO_VIEW.md" class="docs-link">
+                        <span>📺</span>
+                        <span>使用指南 - 如何查看文档（解决 CORS 问题）</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="CORS_ERROR_HELP.html" class="docs-link">
+                        <span>⚠️</span>
+                        <span>故障排查 - CORS 错误帮助页面</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="CURSOR_CODELENS_SETUP_SUMMARY.md" class="docs-link">
+                        <span>✅</span>
+                        <span>配置总结 - Cursor CodeLens 配置完成</span>
+                    </a>
+                </li>
+                <li>
                     <a href="markdown_viewer.html?file=GITHUB_PAGES_DEPLOY.md" class="docs-link">
                         <span>🚀</span>
                         <span>部署指南 - 部署到 GitHub Pages</span>
@@ -372,18 +452,28 @@
     </div>
 
     <script>
+        // 检测是否通过 file:// 协议打开
+        if (window.location.protocol === 'file:') {
+            const warning = document.getElementById('cors-warning');
+            if (warning) {
+                warning.style.display = 'block';
+                console.warn('⚠️ 检测到使用 file:// 协议，某些功能可能无法正常工作');
+                console.info('💡 解决方案：执行 ./start_server.sh 启动本地服务器');
+            }
+        }
+
         // 添加一些交互效果
         document.querySelectorAll('.card').forEach(card => {
             if (card.style.opacity !== '0.6') {
-                card.addEventListener('mouseenter', function() {
+                card.addEventListener('mouseenter', function () {
                     this.style.background = 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)';
                 });
-                card.addEventListener('mouseleave', function() {
+                card.addEventListener('mouseleave', function () {
                     this.style.background = 'white';
                 });
             }
         });
     </script>
 </body>
-</html>
 
+</html>

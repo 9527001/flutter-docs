@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cursor CodeLens 快速参考</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 24px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .shortcut-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .shortcut-table th,
+        .shortcut-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .shortcut-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .shortcut-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .key {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-family: Monaco, Consolas, monospace;
+            font-size: 14px;
+            font-weight: 500;
+            margin: 2px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .feature-box h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .feature-box p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .codelens-example {
+            background: #2d2d2d;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: Monaco, Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+
+        .codelens-info {
+            color: #4ec9b0;
+            font-style: italic;
+        }
+
+        .codelens-keyword {
+            color: #c586c0;
+        }
+
+        .codelens-function {
+            color: #dcdcaa;
+        }
+
+        .codelens-type {
+            color: #4ec9b0;
+        }
+
+        .tip {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .tip strong {
+            color: #856404;
+        }
+
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 20px;
+            }
+            
+            .header {
+                color: black;
+            }
+            
+            .card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>⌨️ Cursor CodeLens 快速参考</h1>
+            <p>提升你的代码导航效率</p>
+        </div>
+
+        <!-- 核心快捷键 -->
+        <div class="card">
+            <h2>🎯 核心快捷键 (macOS)</h2>
+            <table class="shortcut-table">
+                <thead>
+                    <tr>
+                        <th>快捷键</th>
+                        <th>功能</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="key">F12</span></td>
+                        <td>跳转到定义</td>
+                        <td>跳转到父类方法定义</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key">⌘</span> + <span class="key">F12</span></td>
+                        <td>查看实现</td>
+                        <td>查看所有子类实现</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key">⇧</span> + <span class="key">F12</span></td>
+                        <td>查看引用</td>
+                        <td>查看方法被调用的位置</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key">⌥</span> + <span class="key">F12</span></td>
+                        <td>快速预览定义</td>
+                        <td>在当前位置预览定义</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key">⌃</span> + <span class="key">-</span></td>
+                        <td>返回上一位置</td>
+                        <td>返回跳转前的位置</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="section">
+                <h3>自定义快捷键</h3>
+                <table class="shortcut-table">
+                    <tbody>
+                        <tr>
+                            <td><span class="key">⌘</span> + <span class="key">U</span></td>
+                            <td>跳转到父类</td>
+                            <td>快速跳转到父类定义</td>
+                        </tr>
+                        <tr>
+                            <td><span class="key">⌘</span> + <span class="key">⇧</span> + <span class="key">I</span></td>
+                            <td>快速查看实现</td>
+                            <td>Peek 实现列表</td>
+                        </tr>
+                        <tr>
+                            <td><span class="key">⌘</span> + <span class="key">⇧</span> + <span class="key">H</span></td>
+                            <td>查看类型层次结构</td>
+                            <td>显示完整的类继承关系</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CodeLens 示例 -->
+        <div class="card">
+            <h2>📊 CodeLens 示例</h2>
+            <div class="codelens-example">
+<span class="codelens-info">// 👆 3 implementations  |  15 references 👇</span>
+<span class="codelens-keyword">@override</span>
+<span class="codelens-type">Widget</span> <span class="codelens-function">build</span>(<span class="codelens-type">BuildContext</span> context) {
+  <span class="codelens-keyword">return</span> Container();
+}
+            </div>
+            
+            <div class="section">
+                <h3>信息解读</h3>
+                <div class="grid">
+                    <div class="feature-box">
+                        <h4>3 implementations</h4>
+                        <p>有 3 个子类重写了这个方法。点击可查看所有实现。</p>
+                    </div>
+                    <div class="feature-box">
+                        <h4>15 references</h4>
+                        <p>这个方法被调用了 15 次。点击可查看所有调用位置。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导航技巧 -->
+        <div class="card">
+            <h2>🧭 导航技巧</h2>
+            <div class="grid">
+                <div class="feature-box">
+                    <h4>面包屑导航</h4>
+                    <p>点击顶部面包屑快速跳转到项目 > 文件 > 类 > 方法</p>
+                </div>
+                <div class="feature-box">
+                    <h4>符号搜索</h4>
+                    <p><span class="key">⌘</span> + <span class="key">T</span> 全局搜索类和方法</p>
+                </div>
+                <div class="feature-box">
+                    <h4>大纲视图</h4>
+                    <p>侧边栏 OUTLINE 标签查看文件结构</p>
+                </div>
+                <div class="feature-box">
+                    <h4>快速预览</h4>
+                    <p>使用 Peek 功能避免频繁跳转文件</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 效率提升 -->
+        <div class="card">
+            <h2>⚡ 效率提升技巧</h2>
+            <div class="section">
+                <h3>多光标编辑</h3>
+                <table class="shortcut-table">
+                    <tbody>
+                        <tr>
+                            <td><span class="key">⌘</span> + <span class="key">D</span></td>
+                            <td>选择下一个匹配项</td>
+                        </tr>
+                        <tr>
+                            <td><span class="key">⌘</span> + <span class="key">⇧</span> + <span class="key">L</span></td>
+                            <td>选择所有匹配项</td>
+                        </tr>
+                        <tr>
+                            <td><span class="key">⌥</span> + <span class="key">Click</span></td>
+                            <td>添加多个光标</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h3>快速编辑</h3>
+                <table class="shortcut-table">
+                    <tbody>
+                        <tr>
+                            <td><span class="key">⌘</span> + <span class="key">/</span></td>
+                            <td>切换注释</td>
+                        </tr>
+                        <tr>
+                            <td><span class="key">⌥</span> + <span class="key">↑/↓</span></td>
+                            <td>移动行</td>
+                        </tr>
+                        <tr>
+                            <td><span class="key">⌥</span> + <span class="key">⇧</span> + <span class="key">↑/↓</span></td>
+                            <td>复制行</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pro Tips -->
+        <div class="card">
+            <h2>💡 Pro Tips</h2>
+            <div class="tip">
+                <strong>Tip 1:</strong> 使用 Peek 功能（⌥ + F12）可以在当前位置预览定义，避免频繁跳转。
+            </div>
+            <div class="tip">
+                <strong>Tip 2:</strong> 善用面包屑导航快速定位当前位置，了解代码结构。
+            </div>
+            <div class="tip">
+                <strong>Tip 3:</strong> 保存时自动格式化和修复已启用，编写代码时无需担心格式问题。
+            </div>
+            <div class="tip">
+                <strong>Tip 4:</strong> 使用符号搜索（⌘ + T）可以快速跳转到任何类或方法，无需记住文件位置。
+            </div>
+        </div>
+
+        <!-- 必装扩展 -->
+        <div class="card">
+            <h2>📦 推荐扩展</h2>
+            <div class="grid">
+                <div class="feature-box">
+                    <h4>✅ Dart</h4>
+                    <p>dart-code.dart-code<br>Dart 语言支持和 CodeLens</p>
+                </div>
+                <div class="feature-box">
+                    <h4>✅ Flutter</h4>
+                    <p>dart-code.flutter<br>Flutter 框架支持</p>
+                </div>
+                <div class="feature-box">
+                    <h4>✅ GitLens</h4>
+                    <p>eamodio.gitlens<br>Git 增强和代码历史</p>
+                </div>
+                <div class="feature-box">
+                    <h4>✅ Error Lens</h4>
+                    <p>usernamehw.errorlens<br>内联错误提示</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 相关文档 -->
+        <div class="card">
+            <h2>📚 相关文档</h2>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <a href=".vscode/CODELENS_GUIDE.md" class="button">📖 完整使用指南</a>
+                <a href=".vscode/README.md" class="button">⚙️ 配置说明</a>
+                <a href=".vscode/QUICK_REFERENCE.md" class="button">⚡ 快速参考</a>
+                <a href="index.html" class="button">🏠 返回首页</a>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="footer">
+            <p>Mind App Development Team © 2025</p>
+            <p>💡 按 <span class="key">⌘</span> + <span class="key">P</span> 打印此页面作为速查表</p>
+        </div>
+    </div>
+
+    <script>
+        // 添加打印优化
+        window.onbeforeprint = function() {
+            document.body.style.background = 'white';
+        };
+    </script>
+</body>
+</html>
+
