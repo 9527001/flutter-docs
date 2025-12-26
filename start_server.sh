@@ -10,6 +10,17 @@ echo ""
 # 检查 Python 是否安装
 if command -v python3 &> /dev/null; then
     PORT=8000
+    
+    # 检查端口是否被占用
+    if lsof -Pi :$PORT -sTCP:LISTEN -t &> /dev/null; then
+        echo "⚠️  端口 $PORT 已被占用，正在清理..."
+        # 杀死占用端口的进程
+        lsof -ti:$PORT | xargs kill -9 &> /dev/null
+        echo "✅ 端口已清理"
+        echo ""
+        sleep 1
+    fi
+    
     echo "🚀 启动 HTTP 服务器在端口 $PORT..."
     echo ""
     echo "✅ 请在浏览器中访问以下页面:"
